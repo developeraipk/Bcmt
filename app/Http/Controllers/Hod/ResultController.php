@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Models\ExaminationResult;
+use App\Models\Program;
 use App\Models\ResultAdjustment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,40 +16,83 @@ use Inertia\Response;
 
 class ResultController extends Controller
 {
+    /**
+     * Display filtered candidate entrance examination results
+     */
     public function index(Request $request): Response
     {
         $examinationId = $request->query('examination_id');
+        $programId = $request->query('program_id');
         $search = $request->query('search');
-        $status = $request->query('status'); // pass, fail, void
+        $status = $request->query('status'); // submitted, started, expired, pass, fail, disqualified
+        $gender = $request->query('gender'); // male, female
 
-        $results = ExaminationResult::with([
+        $query = ExaminationResult::with([
             'application.applicantProfile',
             'examination.sessionProgram.program',
             'attempt.answers.question.options',
             'attempt.answers.selectedOption',
-        ])
-            ->when($examinationId, fn ($q) => $q->where('examination_id', $examinationId))
-            ->when($status === 'pass', fn ($q) => $q->where('is_passed', true))
-            ->when($status === 'fail', fn ($q) => $q->where('is_passed', false))
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('application', function ($appQ) use ($search) {
-                        $appQ->where('application_number', 'like', "%{$search}%")
-                             ->orWhere('roll_number', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('application.applicantProfile', function ($profQ) use ($search) {
-                        $profQ->where('full_name', 'like', "%{$search}%")
-                              ->orWhere('cnic', 'like', "%{$search}%");
-                    });
+        ]);
+
+        if ($examinationId) {
+            $query->where('examination_id', $examinationId);
+        }
+
+        if ($programId) {
+            $query->whereHas('examination.sessionProgram', function ($spQ) use ($programId) {
+                $spQ->where('program_id', $programId);
+            });
+        }
+
+        if ($gender) {
+            $query->whereHas('application.applicantProfile', function ($profQ) use ($gender) {
+                $profQ->where('gender', $gender);
+            });
+        }
+
+        if ($status) {
+            if ($status === 'submitted') {
+                $query->whereHas('attempt', fn ($a) => $a->where('status', 'submitted'));
+            } elseif ($status === 'started' || $status === 'in_progress') {
+                $query->whereHas('attempt', fn ($a) => $a->where('status', 'in_progress')->where('server_deadline', '>', now()));
+            } elseif ($status === 'expired' || $status === 'timed_out') {
+                $query->where(function ($subQ) {
+                    $subQ->whereHas('attempt', fn ($a) => $a->where('status', 'timed_out'))
+                         ->orWhereHas('attempt', fn ($a) => $a->where('status', 'in_progress')->where('server_deadline', '<=', now()));
                 });
-            })
-            ->orderByDesc('id')
-            ->paginate(25)
+            } elseif ($status === 'pass') {
+                $query->where('is_passed', true);
+            } elseif ($status === 'fail') {
+                $query->where('is_passed', false);
+            } elseif ($status === 'disqualified') {
+                $query->where('status', 'disqualified');
+            }
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('application', function ($appQ) use ($search) {
+                    $appQ->where('application_number', 'like', "%{$search}%")
+                         ->orWhere('roll_number', 'like', "%{$search}%");
+                })
+                ->orWhereHas('application.applicantProfile', function ($profQ) use ($search) {
+                    $profQ->where('full_name', 'like', "%{$search}%")
+                          ->orWhere('father_name', 'like', "%{$search}%")
+                          ->orWhere('cnic', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Recent 20 students per page with full query string preservation
+        $results = $query->orderByDesc('id')
+            ->paginate(20)
             ->withQueryString();
 
         $examinations = Examination::with('sessionProgram.program')
             ->orderByDesc('id')
             ->get(['id', 'title', 'exam_code', 'session_program_id', 'total_marks']);
+
+        $programs = Program::orderBy('name')->get(['id', 'name', 'code']);
 
         $stats = [
             'total_candidates' => ExaminationResult::count(),
@@ -60,12 +104,269 @@ class ResultController extends Controller
         return Inertia::render('Hod/Results/Index', [
             'results' => $results,
             'examinations' => $examinations,
+            'programs' => $programs,
             'filters' => [
                 'examination_id' => $examinationId ? (int) $examinationId : '',
+                'program_id' => $programId ? (int) $programId : '',
                 'search' => $search ?? '',
                 'status' => $status ?? '',
+                'gender' => $gender ?? '',
             ],
             'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Download Results as CSV or Excel Spreadsheet
+     */
+    public function export(Request $request)
+    {
+        $format = strtolower((string) $request->query('format', 'csv'));
+        $examinationId = $request->query('examination_id');
+        $programId = $request->query('program_id');
+        $search = $request->query('search');
+        $status = $request->query('status');
+        $gender = $request->query('gender');
+
+        $query = ExaminationResult::with([
+            'application.applicantProfile',
+            'examination.sessionProgram.program',
+            'attempt',
+        ]);
+
+        if ($examinationId) {
+            $query->where('examination_id', $examinationId);
+        }
+
+        if ($programId) {
+            $query->whereHas('examination.sessionProgram', function ($spQ) use ($programId) {
+                $spQ->where('program_id', $programId);
+            });
+        }
+
+        if ($gender) {
+            $query->whereHas('application.applicantProfile', function ($profQ) use ($gender) {
+                $profQ->where('gender', $gender);
+            });
+        }
+
+        if ($status) {
+            if ($status === 'submitted') {
+                $query->whereHas('attempt', fn ($a) => $a->where('status', 'submitted'));
+            } elseif ($status === 'started' || $status === 'in_progress') {
+                $query->whereHas('attempt', fn ($a) => $a->where('status', 'in_progress')->where('server_deadline', '>', now()));
+            } elseif ($status === 'expired' || $status === 'timed_out') {
+                $query->where(function ($subQ) {
+                    $subQ->whereHas('attempt', fn ($a) => $a->where('status', 'timed_out'))
+                         ->orWhereHas('attempt', fn ($a) => $a->where('status', 'in_progress')->where('server_deadline', '<=', now()));
+                });
+            } elseif ($status === 'pass') {
+                $query->where('is_passed', true);
+            } elseif ($status === 'fail') {
+                $query->where('is_passed', false);
+            } elseif ($status === 'disqualified') {
+                $query->where('status', 'disqualified');
+            }
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('application', function ($appQ) use ($search) {
+                    $appQ->where('application_number', 'like', "%{$search}%")
+                         ->orWhere('roll_number', 'like', "%{$search}%");
+                })
+                ->orWhereHas('application.applicantProfile', function ($profQ) use ($search) {
+                    $profQ->where('full_name', 'like', "%{$search}%")
+                          ->orWhere('father_name', 'like', "%{$search}%")
+                          ->orWhere('cnic', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        $records = $query->orderByDesc('id')->get();
+
+        $prefix = 'BCMT_Results';
+        if ($programId) {
+            $prog = Program::find($programId);
+            if ($prog) {
+                $prefix = 'BCMT_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $prog->code);
+            }
+        }
+        $filename = "{$prefix}_" . date('Y_m_d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($records) {
+            $handle = fopen('php://output', 'w');
+            // Write UTF-8 BOM so Microsoft Excel renders symbols & Urdu characters perfectly
+            fputs($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, [
+                'Sr #',
+                'Roll Number',
+                'Application Number',
+                'Candidate Full Name',
+                'Father Name',
+                'Gender',
+                'CNIC / Form-B',
+                'Mobile Contact',
+                'Applied Program',
+                'Entrance Test Code & Title',
+                'Shift',
+                'Attempt Status',
+                'Total Questions',
+                'Correct Answers',
+                'Incorrect Answers',
+                'Unanswered',
+                'Total Marks',
+                'Obtained Marks',
+                'Percentage (%)',
+                'Outcome',
+                'Attempt Start Time',
+                'Submission Time',
+            ]);
+
+            $sr = 1;
+            foreach ($records as $r) {
+                $profile = $r->application?->applicantProfile;
+                $attempt = $r->attempt;
+                $prog = $r->examination?->sessionProgram?->program;
+
+                $attemptStatus = 'Submitted';
+                if ($attempt) {
+                    if ($attempt->status === 'in_progress') {
+                        $attemptStatus = $attempt->isExpired() ? 'Expired (Timed Out)' : 'In Progress (Started)';
+                    } elseif ($attempt->status === 'timed_out') {
+                        $attemptStatus = 'Expired (Timed Out)';
+                    } elseif ($attempt->status === 'disqualified') {
+                        $attemptStatus = 'Disqualified';
+                    }
+                }
+
+                $outcome = $r->is_passed ? 'PASSED' : 'FAILED';
+                if ($r->status === 'disqualified') {
+                    $outcome = 'DISQUALIFIED';
+                }
+
+                fputcsv($handle, [
+                    $sr++,
+                    $r->application?->roll_number ?? 'N/A',
+                    $r->application?->application_number ?? 'N/A',
+                    $profile?->full_name ?? 'N/A',
+                    $profile?->father_name ?? 'N/A',
+                    ucfirst((string) ($profile?->gender ?? 'N/A')),
+                    $profile?->cnic ?? 'N/A',
+                    $profile?->mobile ?? 'N/A',
+                    $prog?->name ?? 'N/A',
+                    ($r->examination?->exam_code ? "[{$r->examination->exam_code}] " : '') . ($r->examination?->title ?? 'N/A'),
+                    $r->examination?->shift ?? 'Morning',
+                    $attemptStatus,
+                    $r->total_questions,
+                    $r->correct_answers,
+                    $r->incorrect_answers,
+                    $r->unanswered,
+                    number_format((float) $r->total_marks, 2),
+                    number_format((float) $r->obtained_marks, 2),
+                    number_format((float) $r->percentage, 2) . '%',
+                    $outcome,
+                    $attempt?->start_time ? $attempt->start_time->format('Y-m-d H:i') : 'N/A',
+                    $attempt?->end_time ? $attempt->end_time->format('Y-m-d H:i') : ($r->created_at ? $r->created_at->format('Y-m-d H:i') : 'N/A'),
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Official Printable Gazette / PDF View
+     */
+    public function printGazette(Request $request): Response
+    {
+        $examinationId = $request->query('examination_id');
+        $programId = $request->query('program_id');
+        $search = $request->query('search');
+        $status = $request->query('status');
+        $gender = $request->query('gender');
+
+        $query = ExaminationResult::with([
+            'application.applicantProfile',
+            'examination.sessionProgram.program',
+            'attempt',
+        ]);
+
+        if ($examinationId) {
+            $query->where('examination_id', $examinationId);
+        }
+
+        if ($programId) {
+            $query->whereHas('examination.sessionProgram', function ($spQ) use ($programId) {
+                $spQ->where('program_id', $programId);
+            });
+        }
+
+        if ($gender) {
+            $query->whereHas('application.applicantProfile', function ($profQ) use ($gender) {
+                $profQ->where('gender', $gender);
+            });
+        }
+
+        if ($status) {
+            if ($status === 'submitted') {
+                $query->whereHas('attempt', fn ($a) => $a->where('status', 'submitted'));
+            } elseif ($status === 'started' || $status === 'in_progress') {
+                $query->whereHas('attempt', fn ($a) => $a->where('status', 'in_progress')->where('server_deadline', '>', now()));
+            } elseif ($status === 'expired' || $status === 'timed_out') {
+                $query->where(function ($subQ) {
+                    $subQ->whereHas('attempt', fn ($a) => $a->where('status', 'timed_out'))
+                         ->orWhereHas('attempt', fn ($a) => $a->where('status', 'in_progress')->where('server_deadline', '<=', now()));
+                });
+            } elseif ($status === 'pass') {
+                $query->where('is_passed', true);
+            } elseif ($status === 'fail') {
+                $query->where('is_passed', false);
+            } elseif ($status === 'disqualified') {
+                $query->where('status', 'disqualified');
+            }
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('application', function ($appQ) use ($search) {
+                    $appQ->where('application_number', 'like', "%{$search}%")
+                         ->orWhere('roll_number', 'like', "%{$search}%");
+                })
+                ->orWhereHas('application.applicantProfile', function ($profQ) use ($search) {
+                    $profQ->where('full_name', 'like', "%{$search}%")
+                          ->orWhere('father_name', 'like', "%{$search}%")
+                          ->orWhere('cnic', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        $results = $query->orderByDesc('obtained_marks')->get();
+
+        $selectedProgram = $programId ? Program::find($programId) : null;
+        $selectedExamination = $examinationId ? Examination::find($examinationId) : null;
+
+        return Inertia::render('Hod/Results/PrintGazette', [
+            'results' => $results,
+            'selectedProgram' => $selectedProgram,
+            'selectedExamination' => $selectedExamination,
+            'filterMetadata' => [
+                'status' => $status,
+                'gender' => $gender,
+                'search' => $search,
+            ],
+            'generatedAt' => now()->format('d M Y, h:i A'),
         ]);
     }
 

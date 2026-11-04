@@ -86,6 +86,9 @@ class ExaminationEngineService
             // Consume access token
             $accessToken->update(['is_consumed' => true, 'consumed_at' => now()]);
 
+            // Initialize baseline result record so in-progress / started attempts are visible on results table
+            ResultCalculationService::calculate($attempt);
+
             // Update application state
             $application->transitionState('exam_attempt', 'in_progress', $accessToken->user_id, 'Started online examination');
 

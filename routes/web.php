@@ -134,6 +134,11 @@ Route::middleware(['auth', 'role:super_admin,management,admission_officer,docume
     Route::post('/seat-allocation/unrelease/{id}', [AdminSeatAllocationController::class, 'unrelease'])->name('seat-allocation.unrelease');
     Route::delete('/seat-allocation/{id}', [AdminSeatAllocationController::class, 'destroy'])->name('seat-allocation.destroy');
 
+    // Entrance Test Results Access for Super Admin
+    Route::get('/results', [\App\Http\Controllers\Hod\ResultController::class, 'index'])->name('results.index');
+    Route::get('/results/export', [\App\Http\Controllers\Hod\ResultController::class, 'export'])->name('results.export');
+    Route::get('/results/print', [\App\Http\Controllers\Hod\ResultController::class, 'printGazette'])->name('results.print');
+
     // Settings & Logs
     Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
@@ -173,6 +178,8 @@ Route::middleware(['auth', 'role:super_admin,management,hod,exam_manager'])->pre
 
     // Test Results Management & Administrative Actions
     Route::get('/results', [\App\Http\Controllers\Hod\ResultController::class, 'index'])->name('results.index');
+    Route::get('/results/export', [\App\Http\Controllers\Hod\ResultController::class, 'export'])->name('results.export');
+    Route::get('/results/print', [\App\Http\Controllers\Hod\ResultController::class, 'printGazette'])->name('results.print');
     Route::post('/results/{id}/adjust', [\App\Http\Controllers\Hod\ResultController::class, 'adjustScore'])->name('results.adjust');
     Route::post('/results/{id}/reset', [\App\Http\Controllers\Hod\ResultController::class, 'resetAttempt'])->name('results.reset');
     Route::post('/results/{id}/void', [\App\Http\Controllers\Hod\ResultController::class, 'voidAttempt'])->name('results.void');

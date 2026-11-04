@@ -17,6 +17,14 @@ import {
   X,
   Save,
   Trash2,
+  Download,
+  FileSpreadsheet,
+  Printer,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Filter,
 } from 'lucide-react';
 
 interface ResultItem {
@@ -37,6 +45,8 @@ interface ResultItem {
     roll_number?: string;
     applicant_profile?: {
       full_name: string;
+      father_name?: string;
+      gender?: string;
       cnic: string;
     };
   };
@@ -47,6 +57,7 @@ interface ResultItem {
     shift?: string;
     session_program?: {
       program?: {
+        id: number;
         name: string;
         code: string;
       };
@@ -54,8 +65,10 @@ interface ResultItem {
   };
   attempt?: {
     id: number;
+    status?: string;
     start_time?: string;
     end_time?: string;
+    server_deadline?: string;
     answers?: Array<{
       id: number;
       is_correct: boolean;
@@ -82,6 +95,8 @@ interface Props {
     data: ResultItem[];
     current_page: number;
     last_page: number;
+    from: number;
+    to: number;
     total: number;
     links: any[];
   };
@@ -91,10 +106,17 @@ interface Props {
     exam_code: string;
     total_marks: number;
   }>;
+  programs: Array<{
+    id: number;
+    name: string;
+    code: string;
+  }>;
   filters: {
     examination_id?: number | string;
+    program_id?: number | string;
     search?: string;
     status?: string;
+    gender?: string;
   };
   stats: {
     total_candidates: number;
@@ -104,27 +126,60 @@ interface Props {
   };
 }
 
-export default function ResultsIndex({ results, examinations, filters, stats }: Props) {
+export default function ResultsIndex({
+  results,
+  examinations = [],
+  programs = [],
+  filters,
+  stats,
+}: Props) {
   const [search, setSearch] = useState(filters.search || '');
   const [selectedExamId, setSelectedExamId] = useState(filters.examination_id || '');
+  const [selectedProgramId, setSelectedProgramId] = useState(filters.program_id || '');
   const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
+  const [selectedGender, setSelectedGender] = useState(filters.gender || '');
 
   const [inspectResult, setInspectResult] = useState<ResultItem | null>(null);
   const [adjustResult, setAdjustResult] = useState<ResultItem | null>(null);
   const [newScoreInput, setNewScoreInput] = useState<string>('');
   const [adjustReason, setAdjustReason] = useState<string>('');
 
+  // Build active query string for downloads and pagination
+  const buildQuery = (overridePage?: number) => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (selectedProgramId) params.set('program_id', String(selectedProgramId));
+    if (selectedExamId) params.set('examination_id', String(selectedExamId));
+    if (selectedStatus) params.set('status', selectedStatus);
+    if (selectedGender) params.set('gender', selectedGender);
+    if (overridePage && overridePage > 1) params.set('page', String(overridePage));
+    return params.toString();
+  };
+
+  const activeQueryString = buildQuery();
+
   const handleFilter = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     router.get(
       '/hod/results',
       {
-        examination_id: selectedExamId || undefined,
         search: search || undefined,
+        program_id: selectedProgramId || undefined,
+        examination_id: selectedExamId || undefined,
         status: selectedStatus || undefined,
+        gender: selectedGender || undefined,
       },
       { preserveState: true }
     );
+  };
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setSelectedProgramId('');
+    setSelectedExamId('');
+    setSelectedStatus('');
+    setSelectedGender('');
+    router.get('/hod/results', {}, { preserveState: false });
   };
 
   const handleOpenAdjust = (res: ResultItem) => {
@@ -171,30 +226,102 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
     }
   };
 
+  // Generate pagination page numbers (around current page)
+  const renderPageNumbers = () => {
+    const totalPages = results.last_page || 1;
+    const current = results.current_page || 1;
+    const pages: number[] = [];
+
+    const start = Math.max(1, current - 2);
+    const end = Math.min(totalPages, current + 2);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    return pages.map((p) => {
+      const isCurrent = p === current;
+      const url = `/hod/results?${buildQuery(p)}`;
+
+      return isCurrent ? (
+        <span
+          key={p}
+          className="relative inline-flex items-center px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 border border-blue-600 z-10"
+        >
+          {p}
+        </span>
+      ) : (
+        <Link
+          key={p}
+          href={url}
+          preserveState
+          className="relative inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 transition-colors"
+        >
+          {p}
+        </Link>
+      );
+    });
+  };
+
   return (
     <HodLayout>
       <Head title="Entrance Test Results - BCMT HOD" />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      {/* Header & Export Toolbar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
           <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
-            Candidate Test Performance & Auditing
+            Candidate Test Performance &amp; Auditing
           </span>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 mt-2">
-            Entrance Examination Results & Actions
+            Entrance Examination Results &amp; Reports
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Review applicant scores, examine detailed answer scripts, and apply formal score adjustments.
+            Review applicant scores, examine detailed answer scripts, and export verified merit gazettes.
           </p>
         </div>
 
-        <Link
-          href="/hod/exams"
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold shadow-2xs transition self-start sm:self-auto"
-        >
-          <ArrowLeft className="w-4 h-4" /> Manage Tests & PINs
-        </Link>
+        {/* Professional Export & Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Export CSV */}
+          <a
+            href={`/hod/results/export?format=csv&${activeQueryString}`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+            title="Download full candidate test results in CSV format"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+            <span>Export CSV</span>
+          </a>
+
+          {/* Export Excel */}
+          <a
+            href={`/hod/results/export?format=excel&${activeQueryString}`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+            title="Download results in Excel-compatible spreadsheet"
+          >
+            <Download className="w-4 h-4 text-emerald-100" />
+            <span>Export Excel</span>
+          </a>
+
+          {/* Print Gazette / PDF */}
+          <a
+            href={`/hod/results/print?${activeQueryString}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+            title="Print or save official institutional results gazette as PDF"
+          >
+            <Printer className="w-4 h-4 text-[#FFB606]" />
+            <span>Print / PDF Gazette</span>
+          </a>
+
+          <Link
+            href="/hod/exams"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold shadow-2xs transition"
+          >
+            <ArrowLeft className="w-4 h-4" /> Manage Tests
+          </Link>
+        </div>
       </div>
 
       {/* Metric Cards */}
@@ -220,64 +347,123 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
         </div>
       </div>
 
-      {/* Filter Bar */}
+      {/* Advanced Filter Bar matching requirements */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 shadow-xs">
-        <form onSubmit={handleFilter} className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by candidate name, roll number, or application number..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-none"
-            />
+        <form onSubmit={handleFilter} className="flex flex-col gap-3">
+          {/* Top Row: Search input + Program Selector + Entrance Test Selector */}
+          <div className="flex flex-col md:flex-row items-center gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by candidate name, roll number, or application number..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+              />
+            </div>
+
+            {/* Program Dropdown (All Programs / Programwise) */}
+            <div className="w-full md:w-56">
+              <select
+                value={selectedProgramId}
+                onChange={(e) => setSelectedProgramId(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-medium"
+              >
+                <option value="">All Academic Programs</option>
+                {programs.map((prog) => (
+                  <option key={prog.id} value={prog.id}>
+                    {prog.name} ({prog.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Entrance Test Dropdown */}
+            <div className="w-full md:w-56">
+              <select
+                value={selectedExamId}
+                onChange={(e) => setSelectedExamId(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-medium"
+              >
+                <option value="">All Entrance Tests</option>
+                {examinations.map((exam) => (
+                  <option key={exam.id} value={exam.id}>
+                    {exam.title} ({exam.exam_code})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="w-full sm:w-60">
-            <select
-              value={selectedExamId}
-              onChange={(e) => setSelectedExamId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-none"
-            >
-              <option value="">All Entrance Tests</option>
-              {examinations.map((exam) => (
-                <option key={exam.id} value={exam.id}>
-                  {exam.title} ({exam.exam_code})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Bottom Row: Status Dropdown + Gender Dropdown + Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            {/* Status Dropdown: All Status, Submitted, Started, Expired, Passed, Failed */}
+            <div className="w-full sm:w-52">
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-semibold"
+              >
+                <option value="">All Statuses</option>
+                <option value="submitted">Submitted (Completed)</option>
+                <option value="started">Started (In Progress)</option>
+                <option value="expired">Expired (Timed Out)</option>
+                <option value="pass">Passed Only</option>
+                <option value="fail">Failed Only</option>
+                <option value="disqualified">Disqualified Only</option>
+              </select>
+            </div>
 
-          <div className="w-full sm:w-36">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-none"
-            >
-              <option value="">All Results</option>
-              <option value="pass">Passed Only</option>
-              <option value="fail">Failed Only</option>
-            </select>
-          </div>
+            {/* Gender Dropdown: All Genders, Male, Female */}
+            <div className="w-full sm:w-40">
+              <select
+                value={selectedGender}
+                onChange={(e) => setSelectedGender(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-semibold"
+              >
+                <option value="">All Genders</option>
+                <option value="male">Male Only</option>
+                <option value="female">Female Only</option>
+              </select>
+            </div>
 
-          <button
-            type="submit"
-            className="w-full sm:w-auto px-5 py-2 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer"
-          >
-            Filter
-          </button>
+            {/* Buttons: Filter & Reset */}
+            <div className="flex items-center gap-2 w-full sm:w-auto ml-auto">
+              <button
+                type="submit"
+                className="w-full sm:w-auto px-5 py-2 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+              >
+                <Filter className="w-3.5 h-3.5" />
+                <span>Filter</span>
+              </button>
+
+              {(search || selectedProgramId || selectedExamId || selectedStatus || selectedGender) && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="w-full sm:w-auto px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer flex items-center justify-center gap-1"
+                  title="Clear all active filters"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+          </div>
         </form>
       </div>
 
-      {/* Results Table */}
+      {/* Results Table (Recent 20 candidates per page) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden mb-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
-                <th className="p-4">Candidate & Roll #</th>
-                <th className="p-4">Entrance Test</th>
+                <th className="p-4">Candidate &amp; Roll #</th>
+                <th className="p-4">Program &amp; Test</th>
+                <th className="p-4 text-center">Attempt Status</th>
                 <th className="p-4 text-center">Breakdown</th>
                 <th className="p-4 text-center">Score / Total</th>
                 <th className="p-4 text-center">Percentage</th>
@@ -289,6 +475,9 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
               {results.data.map((res) => {
                 const profile = res.application?.applicant_profile;
                 const isDisqualified = res.status === 'disqualified';
+                const attemptStatus = res.attempt?.status || 'submitted';
+                const isInProgress = attemptStatus === 'in_progress';
+                const isTimedOut = attemptStatus === 'timed_out';
 
                 return (
                   <tr key={res.id} className="hover:bg-slate-50/60 transition">
@@ -301,15 +490,43 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
                         </span>
                         <span>•</span>
                         <span>{res.application?.application_number}</span>
+                        {profile?.gender && (
+                          <>
+                            <span>•</span>
+                            <span className="capitalize font-sans font-semibold text-slate-600">{profile.gender}</span>
+                          </>
+                        )}
                       </div>
                     </td>
 
-                    {/* Examination */}
+                    {/* Program & Examination */}
                     <td className="p-4 font-sans">
-                      <div className="font-bold text-slate-900">{res.examination?.title}</div>
-                      <div className="text-[11px] text-slate-500">
-                        {res.examination?.session_program?.program?.name} • Shift: {res.examination?.shift || 'Morning'}
+                      <div className="font-bold text-slate-900">
+                        {res.examination?.session_program?.program?.name || 'Academic Program'}
                       </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        {res.examination?.title} ({res.examination?.exam_code}) • Shift: {res.examination?.shift || 'Morning'}
+                      </div>
+                    </td>
+
+                    {/* Attempt Status Badge */}
+                    <td className="p-4 text-center font-sans">
+                      {isInProgress ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          <span>Started</span>
+                        </span>
+                      ) : isTimedOut ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-800 border border-slate-300">
+                          <Clock className="w-3 h-3 text-slate-500" />
+                          <span>Expired</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Submitted</span>
+                        </span>
+                      )}
                     </td>
 
                     {/* Breakdown */}
@@ -332,15 +549,15 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
                     {/* Score / Total */}
                     <td className="p-4 text-center font-bold text-sm">
                       <span className={res.is_passed ? 'text-emerald-700' : 'text-rose-700'}>
-                        {res.obtained_marks}
+                        {Number(res.obtained_marks).toFixed(2)}
                       </span>
-                      <span className="text-slate-400 text-xs"> / {res.total_marks}</span>
+                      <span className="text-slate-400 text-xs"> / {Number(res.total_marks).toFixed(2)}</span>
                     </td>
 
                     {/* Percentage */}
                     <td className="p-4 text-center font-bold">
                       <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md border border-slate-200">
-                        {res.percentage}%
+                        {Number(res.percentage).toFixed(2)}%
                       </span>
                     </td>
 
@@ -349,6 +566,10 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
                       {isDisqualified ? (
                         <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-200 text-slate-700">
                           Disqualified
+                        </span>
+                      ) : isInProgress ? (
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-blue-800 border border-blue-200">
+                          In Progress
                         </span>
                       ) : res.is_passed ? (
                         <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
@@ -393,7 +614,7 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
                           <RotateCcw className="w-3.5 h-3.5" />
                         </button>
 
-                        {/* Delete Attempt / Result (Replaced the old cross icon) */}
+                        {/* Delete Attempt / Result */}
                         <button
                           onClick={() => handleDeleteResult(res)}
                           title="Permanently delete test result and attempt"
@@ -410,11 +631,11 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
 
               {results.data.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-slate-500 font-sans">
+                  <td colSpan={8} className="p-12 text-center text-slate-500 font-sans">
                     <Award className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                    <p className="font-bold text-slate-700 text-sm">No entrance test attempts recorded yet.</p>
+                    <p className="font-bold text-slate-700 text-sm">No entrance test attempts recorded matching the filters.</p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Candidate results will appear here in real-time as tests are taken and submitted.
+                      Candidate results will appear here as tests are started, submitted, or filtered.
                     </p>
                   </td>
                 </tr>
@@ -422,6 +643,86 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
             </tbody>
           </table>
         </div>
+
+        {/* Professional Pagination matching Picture 2 */}
+        {results.total > 0 && (
+          <div className="bg-white px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+            {/* Left: Showing 1 to 20 of 83 test results (Page 1 of 5) */}
+            <div className="text-xs text-slate-600">
+              Showing <strong className="font-bold text-slate-900">{results.from || 0}</strong> to{' '}
+              <strong className="font-bold text-slate-900">{results.to || 0}</strong> of{' '}
+              <strong className="font-bold text-slate-900">{results.total}</strong> test results (Page{' '}
+              <strong className="font-bold text-slate-900">{results.current_page}</strong> of{' '}
+              <strong className="font-bold text-slate-900">{results.last_page}</strong>)
+            </div>
+
+            {/* Right: « First  Prev  1 2 3 4 5  Next  Last » */}
+            <div className="inline-flex rounded-lg shadow-2xs border border-slate-300 overflow-hidden divide-x divide-slate-300">
+              {/* First Page button */}
+              {results.current_page > 1 ? (
+                <Link
+                  href={`/hod/results?${buildQuery(1)}`}
+                  preserveState
+                  className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  « First
+                </Link>
+              ) : (
+                <span className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-50 cursor-not-allowed">
+                  « First
+                </span>
+              )}
+
+              {/* Prev button */}
+              {results.current_page > 1 ? (
+                <Link
+                  href={`/hod/results?${buildQuery(results.current_page - 1)}`}
+                  preserveState
+                  className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Prev
+                </Link>
+              ) : (
+                <span className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-50 cursor-not-allowed">
+                  Prev
+                </span>
+              )}
+
+              {/* Page numbers */}
+              {renderPageNumbers()}
+
+              {/* Next button */}
+              {results.current_page < results.last_page ? (
+                <Link
+                  href={`/hod/results?${buildQuery(results.current_page + 1)}`}
+                  preserveState
+                  className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Next
+                </Link>
+              ) : (
+                <span className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-50 cursor-not-allowed">
+                  Next
+                </span>
+              )}
+
+              {/* Last Page button */}
+              {results.current_page < results.last_page ? (
+                <Link
+                  href={`/hod/results?${buildQuery(results.last_page)}`}
+                  preserveState
+                  className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Last »
+                </Link>
+              ) : (
+                <span className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-50 cursor-not-allowed">
+                  Last »
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal: View Full Candidate Answer Script */}
@@ -494,7 +795,7 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
             <div className="pt-4 border-t border-slate-100 flex justify-end shrink-0">
               <button
                 onClick={() => setInspectResult(null)}
-                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition"
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer"
               >
                 Close Script
               </button>
@@ -511,7 +812,7 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-blue-600" /> Adjust Candidate Score
               </h3>
-              <button onClick={() => setAdjustResult(null)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+              <button onClick={() => setAdjustResult(null)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -539,7 +840,7 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
                   required
                   value={newScoreInput}
                   onChange={(e) => setNewScoreInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold font-mono text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold font-mono text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
                 />
               </div>
 
@@ -553,7 +854,7 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
                   placeholder="e.g. Scrutiny recheck, grace mark or invigilator report"
                   value={adjustReason}
                   onChange={(e) => setAdjustReason(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
                 />
               </div>
 
@@ -561,13 +862,13 @@ export default function ResultsIndex({ results, examinations, filters, stats }: 
                 <button
                   type="button"
                   onClick={() => setAdjustResult(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Save className="w-3.5 h-3.5" /> Save Adjustment
                 </button>

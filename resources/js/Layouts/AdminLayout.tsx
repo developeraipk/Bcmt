@@ -17,6 +17,7 @@ import {
     GraduationCap,
     Clock,
     BookOpen,
+    Award,
 } from 'lucide-react';
 
 interface Props {
@@ -36,6 +37,7 @@ export const AdminLayout: React.FC<Props> = ({ children, title }) => {
         { label: 'Applications & Verification', icon: Users, href: route('admin.applications.index'), active: route().current('admin.applications.*') },
         { label: 'Roll Numbers & Slips', icon: FileCheck, href: route('admin.roll-numbers.index'), active: route().current('admin.roll-numbers.*') },
         { label: 'Admission Tests & PINs', icon: BookOpen, href: route('hod.exams.index'), active: route().current('hod.exams.*') },
+        { label: 'Entrance Test Results', icon: Award, href: route('hod.results.index'), active: route().current('*.results.*') },
         { label: 'Seat Allocation Engine', icon: Armchair, href: route('admin.seat-allocation.index'), active: route().current('admin.seat-allocation.*') },
         { label: 'System & WhatsApp Settings', icon: Settings, href: route('admin.settings.index'), active: route().current('admin.settings.*') },
         { label: 'Audit & Security Logs', icon: Shield, href: route('admin.audit-logs.index'), active: route().current('admin.audit-logs.*') },
