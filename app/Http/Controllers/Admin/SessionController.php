@@ -9,6 +9,7 @@ use App\Models\Program;
 use App\Models\SessionProgram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -39,9 +40,27 @@ class SessionController extends Controller
 
     public function store(Request $request)
     {
+        $requestedCode = trim((string) $request->input('code', ''));
+
+        // If a soft-deleted session exists with this exact code, release its code so the admin can freely recreate/reuse it
+        if ($requestedCode !== '') {
+            AdmissionSession::onlyTrashed()
+                ->where('code', $requestedCode)
+                ->get()
+                ->each(function ($trashed) {
+                    $prefix = substr($trashed->code, 0, 12);
+                    $trashed->update(['code' => $prefix . '_d_' . $trashed->id]);
+                });
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'code' => ['required', 'string', 'max:50', 'unique:admission_sessions,code'],
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('admission_sessions', 'code')->whereNull('deleted_at'),
+            ],
             'start_date' => ['required', 'date'],
             'closing_date' => ['required', 'date', 'after_or_equal:start_date'],
             'is_active' => ['nullable', 'boolean'],

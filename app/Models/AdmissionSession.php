@@ -60,4 +60,15 @@ class AdmissionSession extends Model
     {
         return self::where('is_active', true)->first();
     }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (AdmissionSession $session) {
+            if (!$session->isForceDeleting() && !str_contains($session->code, '_d_')) {
+                $prefix = substr($session->code, 0, 12);
+                $session->code = $prefix . '_d_' . $session->id;
+                $session->saveQuietly();
+            }
+        });
+    }
 }
