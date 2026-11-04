@@ -8,13 +8,27 @@ interface Props {
 }
 
 export default function ApplicationPrint({ application }: Props) {
-  const profile = application.applicant_profile;
-  const program = application.session_program?.program;
-  const session = application.admission_session;
+  const profile = application.applicant_profile || application.applicantProfile;
+  const program = application.session_program?.program || application.sessionProgram?.program;
+  const session = application.admission_session || application.admissionSession;
 
   const handlePrint = () => {
     window.print();
   };
+
+  const isBsProgram = program?.category === 'bs_program' ||
+    program?.category === 'bs_degree' ||
+    (program?.name && program.name.toUpperCase().includes('BS')) ||
+    (program?.code && program.code.toUpperCase().startsWith('BS'));
+
+  const visibleAcademicRecords = (application.academic_records || []).filter((rec: any) => {
+    const level = (rec.level || rec.degree_level || rec.qualification_name || '').toLowerCase();
+    const isInter = level.includes('inter') || level.includes('fsc') || level.includes('hssc');
+    if (isInter) {
+      return Boolean(isBsProgram);
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-stone-100 p-4 sm:p-8 select-none">
@@ -126,7 +140,7 @@ export default function ApplicationPrint({ application }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200">
-              {application.academic_records?.map((rec: any) => (
+              {visibleAcademicRecords.map((rec: any) => (
                 <tr key={rec.id}>
                   <td className="p-2 font-bold uppercase border-r border-stone-200">{rec.level || rec.degree_level || rec.qualification_name || 'N/A'}</td>
                   <td className="p-2 border-r border-stone-200">{rec.board_university || rec.board_name || 'N/A'}</td>

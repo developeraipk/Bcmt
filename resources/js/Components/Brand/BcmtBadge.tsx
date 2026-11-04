@@ -17,14 +17,17 @@ interface AffiliationItemData {
 const AffiliationLogoItem: React.FC<{
     item: AffiliationItemData;
     showIcons: boolean;
-}> = ({ item, showIcons }) => {
+    isLast?: boolean;
+}> = ({ item, showIcons, isLast }) => {
     const [imgErr, setImgErr] = useState(false);
 
     return (
-        <div className="group relative flex flex-col justify-between p-4 bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-lg hover:border-slate-300 hover:-translate-y-1 transition-all duration-300">
+        <div className={`group relative flex flex-col justify-between p-3 sm:p-4 bg-white border border-slate-200/80 rounded-xl sm:rounded-2xl shadow-xs hover:shadow-lg hover:border-slate-300 hover:-translate-y-1 transition-all duration-300 ${
+            isLast ? 'col-span-2 sm:col-span-1 lg:col-span-1' : ''
+        }`}>
             {/* Top Row: Logo & Status Badge */}
-            <div className="flex items-center justify-between gap-3 mb-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 p-1.5 shadow-2xs group-hover:border-slate-300 transition-colors">
+            <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200 p-1.5 shadow-2xs group-hover:border-slate-300 transition-colors">
                     {!imgErr ? (
                         <img
                             src={item.logo}
@@ -33,10 +36,10 @@ const AffiliationLogoItem: React.FC<{
                             onError={() => setImgErr(true)}
                         />
                     ) : (
-                        <ShieldCheck className="h-6 w-6 text-slate-700" />
+                        <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-slate-700" />
                     )}
                 </div>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                     {item.status}
                 </span>
@@ -44,10 +47,10 @@ const AffiliationLogoItem: React.FC<{
 
             {/* Entity Name & Role */}
             <div>
-                <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-[#07294D] transition-colors leading-snug">
+                <h4 className="text-[11px] sm:text-[13px] font-bold text-slate-900 group-hover:text-[#07294D] transition-colors leading-snug line-clamp-2">
                     {item.fullName}
                 </h4>
-                <p className="text-[11px] font-medium text-slate-500 mt-1 leading-normal">
+                <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 mt-1 leading-normal line-clamp-2">
                     {item.role}
                 </p>
             </div>
@@ -95,9 +98,14 @@ export const BcmtAffiliations: React.FC<AffiliationProps> = ({ className = '', s
     ];
 
     return (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 ${className}`}>
+        <div className={`grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3.5 ${className}`}>
             {affiliations.map((item, idx) => (
-                <AffiliationLogoItem key={idx} item={item} showIcons={showIcons} />
+                <AffiliationLogoItem
+                    key={idx}
+                    item={item}
+                    showIcons={showIcons}
+                    isLast={idx === affiliations.length - 1}
+                />
             ))}
         </div>
     );

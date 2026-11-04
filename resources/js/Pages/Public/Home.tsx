@@ -115,20 +115,20 @@ export default function Home({ activeSession, programs, settings }: Props) {
                             </p>
 
                             {/* Call to Actions */}
-                            <div className="flex flex-wrap items-center gap-4 pt-2">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 w-full sm:w-auto">
                                 {isAdmissionOpen ? (
                                     <Link
                                         href={route('apply.index')}
-                                        className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#FFB606] hover:bg-[#EAA700] text-[#07294D] font-black text-sm shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-0.5 border border-[#D49600]/40"
+                                        className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#FFB606] hover:bg-[#EAA700] text-[#07294D] font-black text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 border border-[#D49600]/40 text-center"
                                     >
-                                        <Sparkles className="h-4 w-4 text-[#07294D]" />
+                                        <Sparkles className="h-4 w-4 text-[#07294D] shrink-0" />
                                         <span>Apply Online for Admission</span>
-                                        <ArrowRight className="h-4 w-4 text-[#07294D]" />
+                                        <ArrowRight className="h-4 w-4 text-[#07294D] shrink-0" />
                                     </Link>
                                 ) : (
                                     <button
                                         disabled
-                                        className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-slate-800 text-slate-400 font-bold text-sm cursor-not-allowed border border-slate-700"
+                                        className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-800 text-slate-400 font-bold text-xs sm:text-sm cursor-not-allowed border border-slate-700 text-center"
                                     >
                                         <span>Admissions Closed for Session</span>
                                     </button>
@@ -136,10 +136,10 @@ export default function Home({ activeSession, programs, settings }: Props) {
 
                                 <Link
                                     href={route('login')}
-                                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/20 backdrop-blur-md transition-all shadow-xs"
+                                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm border border-white/20 backdrop-blur-md transition-all shadow-xs text-center"
                                 >
                                     <span>Candidate Portal Login</span>
-                                    <ChevronRight className="h-4 w-4 text-slate-300" />
+                                    <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
                                 </Link>
                             </div>
 
@@ -642,7 +642,7 @@ function ProgramCard({
                     <div className="text-right shrink-0">
                         <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/90 shadow-2xs">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                            <span>{program.seats} Approved Seats</span>
+                            <span>{program.seats} Seats</span>
                         </span>
                         <span className="block text-[10px] font-semibold text-slate-400 mt-1">
                             Open Merit (M / F)
@@ -675,7 +675,7 @@ function ProgramCard({
                                     Duration
                                 </span>
                                 <span className="block text-xs font-bold text-slate-900 truncate">
-                                    {program.duration_years} Years ({program.duration_years * 2} Sems)
+                                    {program.duration_years} Years
                                 </span>
                             </div>
                         </div>

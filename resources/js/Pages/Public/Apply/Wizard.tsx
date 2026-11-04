@@ -513,7 +513,7 @@ export default function Wizard({ activeSession, sessionPrograms }: Props) {
 
                                                 <div className="text-right shrink-0">
                                                     <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-md shadow-2xs">
-                                                        {sp.total_seats} Approved Seats
+                                                        {sp.total_seats} Seats
                                                     </span>
                                                 </div>
                                             </div>

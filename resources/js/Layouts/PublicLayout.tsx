@@ -469,26 +469,32 @@ export const PublicLayout: React.FC<Props> = ({ children }) => {
                     </div>
 
                     {/* Sub-Footer Bottom Bar */}
-                    <div className="mt-12 pt-8 border-t border-[#0A3663] flex flex-col items-center gap-4 text-xs text-slate-300">
-                        {/* Centered Scroll to Top Button */}
-                        <div className="flex justify-center w-full">
-                            <button
-                                type="button"
-                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                                className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#FFB606] text-[#07294D] hover:bg-[#EAA700] shadow-md transition-all font-bold hover:scale-105"
-                                title="Back to Top"
-                            >
-                                <ArrowUp className="h-4 w-4" />
-                            </button>
-                        </div>
+                    <div className="mt-12 pt-8 border-t border-[#0A3663] text-xs text-slate-300">
+                        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] sm:text-xs text-slate-300">
+                            {/* Left: Copyright & Developer Credit */}
+                            <div className="text-center md:text-left space-y-0.5">
+                                <p>© {new Date().getFullYear()} Bannu College of Medical Technologies (BCMT). All rights reserved.</p>
+                                <p className="text-[10.5px] text-slate-400">
+                                    Designed, Developed &amp; Engineered with Excellence by <strong className="text-amber-400 font-bold tracking-wide">Global Tech</strong>
+                                </p>
+                            </div>
 
-                        {/* Copyright & KMU Affiliation aligned in same line */}
-                        <div className="w-full flex flex-wrap items-center justify-between gap-3 text-[11px] sm:text-xs text-slate-300">
-                            <p>© {new Date().getFullYear()} Bannu College of Medical Technologies (BCMT). All rights reserved.</p>
-                            <span className="inline-flex items-center gap-1.5 text-[#FFB606] font-semibold shrink-0">
-                                <ShieldCheck className="h-3.5 w-3.5 text-[#FFB606]" />
-                                <span>Govt. Chartered & KMU Affiliated</span>
-                            </span>
+                            {/* Right: KMU Affiliation & Back to Top Button on Desktop */}
+                            <div className="flex items-center gap-4">
+                                <span className="inline-flex items-center gap-1.5 text-[#FFB606] font-semibold shrink-0">
+                                    <ShieldCheck className="h-3.5 w-3.5 text-[#FFB606]" />
+                                    <span>Govt. Chartered &amp; KMU Affiliated</span>
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                                    className="inline-flex items-center justify-center p-2 rounded-full bg-[#FFB606] text-[#07294D] hover:bg-[#EAA700] shadow-md transition-all font-bold hover:scale-110 shrink-0 cursor-pointer"
+                                    title="Back to Top"
+                                >
+                                    <ArrowUp className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

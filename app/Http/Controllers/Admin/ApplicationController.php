@@ -78,6 +78,7 @@ class ApplicationController extends Controller
                     'matric' => $matric,
                     'intermediate' => $inter,
                     'seat_status' => $app->seatAllocation?->status,
+                    'documents' => $app->documents,
                 ];
             });
 
@@ -327,6 +328,11 @@ class ApplicationController extends Controller
             'inter_total_marks' => ['nullable', 'numeric', 'min:0'],
             'inter_obtained_marks' => ['nullable', 'numeric', 'min:0'],
             'photo' => ['nullable', 'file', 'image', 'max:5120'],
+            'doc_photo' => ['nullable', 'file', 'image', 'max:5120'],
+            'doc_matric_dmc' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
+            'doc_inter_dmc' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
+            'doc_cnic_front' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
+            'doc_domicile' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
         ]);
 
         $normalizedCnic = preg_replace('/[^0-9]/', '', (string) $request->input('cnic'));
@@ -454,19 +460,33 @@ class ApplicationController extends Controller
                 ]);
             }
 
-            // Photo upload
-            if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                $path = $file->store("private_documents/applications/{$application->id}", 'local');
-                ApplicationDocument::create([
-                    'application_id' => $application->id,
-                    'document_type' => 'photo',
-                    'file_path' => $path,
-                    'original_filename' => $file->getClientOriginalName(),
-                    'file_size' => $file->getSize(),
-                    'mime_type' => $file->getMimeType(),
-                    'verification_status' => ($vStatus === 'verified') ? 'approved' : 'pending',
-                ]);
+            // Multi-Document uploads matching Public Application Wizard
+            $docTypes = [
+                'photo' => 'photo',
+                'doc_photo' => 'photo',
+                'doc_matric_dmc' => 'matric_dmc',
+                'doc_inter_dmc' => 'inter_dmc',
+                'doc_cnic_front' => 'cnic_front',
+                'doc_cnic_back' => 'cnic_back',
+                'doc_domicile' => 'domicile',
+            ];
+
+            foreach ($docTypes as $inputKey => $docType) {
+                if ($request->hasFile($inputKey)) {
+                    $file = $request->file($inputKey);
+                    $path = $file->store("private_documents/applications/{$application->id}", 'local');
+                    ApplicationDocument::create([
+                        'application_id' => $application->id,
+                        'document_type' => $docType,
+                        'file_path' => $path,
+                        'original_filename' => $file->getClientOriginalName(),
+                        'file_size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                        'verification_status' => ($vStatus === 'verified') ? 'approved' : 'pending',
+                        'verified_by_user_id' => ($vStatus === 'verified') ? $user->id : null,
+                        'verified_at' => ($vStatus === 'verified') ? now() : null,
+                    ]);
+                }
             }
 
             AuditLog::log('application_created_manually', 'Application', $application->id, null, [
@@ -511,6 +531,11 @@ class ApplicationController extends Controller
             'inter_total_marks' => ['nullable', 'numeric', 'min:0'],
             'inter_obtained_marks' => ['nullable', 'numeric', 'min:0'],
             'photo' => ['nullable', 'file', 'image', 'max:5120'],
+            'doc_photo' => ['nullable', 'file', 'image', 'max:5120'],
+            'doc_matric_dmc' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
+            'doc_inter_dmc' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
+            'doc_cnic_front' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
+            'doc_domicile' => ['nullable', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:5120'],
         ]);
 
         $normalizedCnic = preg_replace('/[^0-9]/', '', (string) $request->input('cnic'));
@@ -624,28 +649,41 @@ class ApplicationController extends Controller
                 }
             }
 
-            // Photo upload
-            if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                $path = $file->store("private_documents/applications/{$application->id}", 'local');
-                $photoDoc = $application->documents->firstWhere('document_type', 'photo');
-                if ($photoDoc) {
-                    $photoDoc->update([
-                        'file_path' => $path,
-                        'original_filename' => $file->getClientOriginalName(),
-                        'file_size' => $file->getSize(),
-                        'mime_type' => $file->getMimeType(),
-                    ]);
-                } else {
-                    ApplicationDocument::create([
-                        'application_id' => $application->id,
-                        'document_type' => 'photo',
-                        'file_path' => $path,
-                        'original_filename' => $file->getClientOriginalName(),
-                        'file_size' => $file->getSize(),
-                        'mime_type' => $file->getMimeType(),
-                        'verification_status' => 'approved',
-                    ]);
+            // Multi-Document uploads matching Public Application Wizard
+            $docTypes = [
+                'photo' => 'photo',
+                'doc_photo' => 'photo',
+                'doc_matric_dmc' => 'matric_dmc',
+                'doc_inter_dmc' => 'inter_dmc',
+                'doc_cnic_front' => 'cnic_front',
+                'doc_cnic_back' => 'cnic_back',
+                'doc_domicile' => 'domicile',
+            ];
+
+            foreach ($docTypes as $inputKey => $docType) {
+                if ($request->hasFile($inputKey)) {
+                    $file = $request->file($inputKey);
+                    $path = $file->store("private_documents/applications/{$application->id}", 'local');
+                    $existingDoc = $application->documents->firstWhere('document_type', $docType);
+                    if ($existingDoc) {
+                        $existingDoc->update([
+                            'file_path' => $path,
+                            'original_filename' => $file->getClientOriginalName(),
+                            'file_size' => $file->getSize(),
+                            'mime_type' => $file->getMimeType(),
+                            'verification_status' => ($vStatus === 'verified') ? 'approved' : 'pending',
+                        ]);
+                    } else {
+                        ApplicationDocument::create([
+                            'application_id' => $application->id,
+                            'document_type' => $docType,
+                            'file_path' => $path,
+                            'original_filename' => $file->getClientOriginalName(),
+                            'file_size' => $file->getSize(),
+                            'mime_type' => $file->getMimeType(),
+                            'verification_status' => ($vStatus === 'verified') ? 'approved' : 'pending',
+                        ]);
+                    }
                 }
             }
 

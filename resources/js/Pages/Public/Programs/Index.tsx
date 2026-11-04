@@ -102,8 +102,8 @@ function ProgramDetailCard({ prog }: { prog: Program }) {
     return (
         <div className="group relative flex flex-col justify-between p-6 sm:p-7 bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-1 transition-all duration-300">
             <div>
-                {/* Header: Code Pill & Category Tag */}
-                <div className="flex items-center justify-between gap-3 mb-4">
+                {/* Header: Code Pill & Category Tag + Seats & Duration Badges */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5 mb-4">
                     <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-black text-[#07294D] bg-[#07294D]/5 px-2.5 py-1 rounded-md border border-[#07294D]/10">
                             {prog.code}
@@ -117,16 +117,16 @@ function ProgramDetailCard({ prog }: { prog: Program }) {
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                         {prog.seats !== undefined && (
                             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/90 shadow-2xs">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                                <span>{prog.seats} Approved Seats</span>
+                                <span>{prog.seats} Seats</span>
                             </span>
                         )}
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 shadow-2xs">
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200 shadow-2xs">
                             <Clock className="h-3 w-3 text-[#07294D]" />
-                            <span>{prog.duration_years} Years Duration</span>
+                            <span>{prog.duration_years} Years</span>
                         </span>
                     </div>
                 </div>
@@ -189,7 +189,7 @@ function ProgramDetailCard({ prog }: { prog: Program }) {
                     href={route('programs.show', prog.code)}
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-[#07294D] text-slate-700 hover:text-white font-bold text-xs border border-slate-200 hover:border-[#07294D] transition-all duration-200 shadow-2xs hover:shadow-xs group/btn"
                 >
-                    <span>Detailed Syllabus</span>
+                    <span>View Details</span>
                     <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-0.5 transition-all" />
                 </Link>
                 <Link

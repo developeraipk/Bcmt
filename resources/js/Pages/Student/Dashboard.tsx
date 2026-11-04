@@ -97,7 +97,8 @@ export default function StudentDashboard({ application, assignedExam, whatsapp }
     const level = (rec.level || rec.degree_level || rec.qualification_name || '').toLowerCase();
     const isInter = level.includes('inter') || level.includes('fsc') || level.includes('hssc');
     if (isInter) {
-      return isBsProgram || (Number(rec.obtained_marks) > 0);
+      // Intermediate credentials strictly displayed only for 4-Year BS degree programs
+      return Boolean(isBsProgram);
     }
     return true;
   });

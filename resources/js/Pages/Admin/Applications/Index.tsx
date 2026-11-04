@@ -132,7 +132,21 @@ export default function ApplicationsIndex({
     inter_total_marks: 1100,
     inter_obtained_marks: 820,
     photo: null as File | null,
+    doc_photo: null as File | null,
+    doc_matric_dmc: null as File | null,
+    doc_inter_dmc: null as File | null,
+    doc_cnic_front: null as File | null,
+    doc_domicile: null as File | null,
   });
+
+  const currentAddProgram = sessionPrograms.find(
+    (sp: any) => String(sp.id) === String(addForm.data.session_program_id)
+  );
+  const isAddBsProgram =
+    currentAddProgram?.program?.category === 'bs_program' ||
+    currentAddProgram?.program?.category === 'bs_degree' ||
+    (currentAddProgram?.program?.name && currentAddProgram.program.name.toUpperCase().includes('BS')) ||
+    (currentAddProgram?.program?.code && currentAddProgram.program.code.toUpperCase().startsWith('BS'));
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,7 +184,21 @@ export default function ApplicationsIndex({
     inter_total_marks: 1100,
     inter_obtained_marks: 0,
     photo: null as File | null,
+    doc_photo: null as File | null,
+    doc_matric_dmc: null as File | null,
+    doc_inter_dmc: null as File | null,
+    doc_cnic_front: null as File | null,
+    doc_domicile: null as File | null,
   });
+
+  const currentEditProgram = sessionPrograms.find(
+    (sp: any) => String(sp.id) === String(editForm.data.session_program_id)
+  );
+  const isEditBsProgram =
+    currentEditProgram?.program?.category === 'bs_program' ||
+    currentEditProgram?.program?.category === 'bs_degree' ||
+    (currentEditProgram?.program?.name && currentEditProgram.program.name.toUpperCase().includes('BS')) ||
+    (currentEditProgram?.program?.code && currentEditProgram.program.code.toUpperCase().startsWith('BS'));
 
   const handleOpenEdit = (app: any) => {
     setEditingApp(app);
@@ -568,6 +596,67 @@ export default function ApplicationsIndex({
                     ))}
                   </select>
                 </div>
+
+                <div className="sm:col-span-3">
+                  {currentEditProgram && (
+                    <div className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-black text-xs px-2 py-0.5 bg-[#07294D] text-[#FFB606] rounded">
+                          {currentEditProgram.program?.code}
+                        </span>
+                        <span className="font-bold text-slate-800">
+                          {currentEditProgram.program?.name}
+                        </span>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border ${
+                        isEditBsProgram
+                          ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                          : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      }`}>
+                        <GraduationCap className="w-3 h-3" />
+                        <span>
+                          {isEditBsProgram ? '4-Year BS Degree (Matric + Inter Required)' : '2-Year Diploma (Matric Required)'}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {currentAddProgram && (
+                  <div className="sm:col-span-2 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-mono font-black text-xs px-2.5 py-1 bg-[#07294D] text-[#FFB606] rounded-md shadow-2xs">
+                        {currentAddProgram.program?.code}
+                      </span>
+                      <div>
+                        <span className="font-bold text-slate-900 block">
+                          {currentAddProgram.program?.name}
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          {currentAddProgram.program?.category === 'bs_degree'
+                            ? '4-Year Professional BS Degree'
+                            : currentAddProgram.program?.category === 'pharmacy_b'
+                            ? '2-Year Pharmacy Category B'
+                            : '2-Year Medical Technology Diploma'} • {currentAddProgram.total_seats || 50} Seats
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${
+                        isAddBsProgram
+                          ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                          : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      }`}>
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        <span>
+                          {isAddBsProgram
+                            ? 'Prerequisite: Intermediate (HSSC Pre-Med / Pre-Eng)'
+                            : 'Prerequisite: Matriculation (Science Pass)'}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Personal Information */}
@@ -752,15 +841,26 @@ export default function ApplicationsIndex({
                 </div>
               </div>
 
-              {/* Academic Credentials */}
+              {/* Dynamic Academic Credentials */}
               <div className="border-t border-stone-200 pt-4">
-                <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-[#07294D]" /> Academic Qualifications
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-[#07294D]" /> Academic Qualifications
+                  </h4>
+                  <span className="text-[11px] font-medium text-stone-500">
+                    {isAddBsProgram
+                      ? 'Both Matric (SSC) and Intermediate (HSSC) are required for BS degree admissions'
+                      : 'Only Matric (SSC) is required for 2-Year Diploma programs'}
+                  </span>
+                </div>
+
+                <div className={`grid grid-cols-1 ${isAddBsProgram ? 'sm:grid-cols-2' : ''} gap-4 text-xs`}>
                   {/* Matric */}
                   <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200 space-y-2.5">
-                    <span className="font-bold text-stone-800 block text-xs">Matriculation (SSC)</span>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-stone-800 block text-xs">Matriculation (SSC)</span>
+                      <span className="text-[10px] font-bold text-rose-600 uppercase bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Mandatory</span>
+                    </div>
                     <input
                       type="text"
                       placeholder="Board Name (e.g. BISE Bannu)"
@@ -786,38 +886,186 @@ export default function ApplicationsIndex({
                     </div>
                   </div>
 
-                  {/* Inter */}
-                  <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200 space-y-2.5">
-                    <span className="font-bold text-stone-800 block text-xs">Intermediate (HSSC)</span>
-                    <input
-                      type="text"
-                      placeholder="Board Name (e.g. BISE Bannu)"
-                      value={addForm.data.inter_board}
-                      onChange={(e) => addForm.setData('inter_board', e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
+                  {/* Inter (Shown for BS Programs) */}
+                  {isAddBsProgram && (
+                    <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-indigo-900 block text-xs">Intermediate (HSSC Pre-Med / Pre-Eng)</span>
+                        <span className="text-[10px] font-bold text-indigo-700 uppercase bg-indigo-100 px-2 py-0.5 rounded border border-indigo-300">BS Required</span>
+                      </div>
                       <input
-                        type="number"
-                        placeholder="Total Marks"
-                        value={addForm.data.inter_total_marks}
-                        onChange={(e) => addForm.setData('inter_total_marks', Number(e.target.value))}
+                        type="text"
+                        placeholder="Board Name (e.g. BISE Bannu)"
+                        value={addForm.data.inter_board}
+                        onChange={(e) => addForm.setData('inter_board', e.target.value)}
                         className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
                       />
-                      <input
-                        type="number"
-                        placeholder="Obtained Marks"
-                        value={addForm.data.inter_obtained_marks}
-                        onChange={(e) => addForm.setData('inter_obtained_marks', Number(e.target.value))}
-                        className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
-                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="number"
+                          placeholder="Total Marks"
+                          value={addForm.data.inter_total_marks}
+                          onChange={(e) => addForm.setData('inter_total_marks', Number(e.target.value))}
+                          className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Obtained Marks"
+                          value={addForm.data.inter_obtained_marks}
+                          onChange={(e) => addForm.setData('inter_obtained_marks', Number(e.target.value))}
+                          className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
+                        />
+                      </div>
                     </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Dynamic Documents Upload Panel (Matching Public Application Wizard) */}
+              <div className="border-t border-stone-200 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileCheck className="w-4 h-4 text-[#07294D]" /> Application Documents
+                  </h4>
+                  <span className="text-[11px] text-stone-500">
+                    Supports JPG, PNG, PDF (Up to 5MB each)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                  {/* Photo */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-stone-800">1. Candidate Photo</span>
+                        <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">Required</span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        {addPhotoPreview ? (
+                          <img src={addPhotoPreview} alt="Photo" className="w-10 h-10 rounded object-cover border border-[#07294D]" />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-white border border-dashed border-stone-300 flex items-center justify-center">
+                            <Upload className="w-4 h-4 text-stone-400" />
+                          </div>
+                        )}
+                        <span className="text-[10px] text-stone-500 truncate">{addForm.data.photo?.name || 'Passport size'}</span>
+                      </div>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Browse Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          addForm.setData('photo', file);
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setAddPhotoPreview(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          } else {
+                            setAddPhotoPreview(null);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Matric DMC */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-stone-800">2. Matric DMC / Certificate</span>
+                        <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">Required</span>
+                      </div>
+                      <p className="text-[10px] text-stone-500 mb-2 truncate">
+                        {addForm.data.doc_matric_dmc?.name || 'SSC Verified Result Card'}
+                      </p>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Browse Matric DMC</span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => addForm.setData('doc_matric_dmc', e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Intermediate DMC (Only shown for BS Program) */}
+                  {isAddBsProgram && (
+                    <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-200 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-indigo-900">3. Inter DMC / Result</span>
+                          <span className="text-[9px] font-bold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">BS Required</span>
+                        </div>
+                        <p className="text-[10px] text-indigo-700 mb-2 truncate">
+                          {addForm.data.doc_inter_dmc?.name || 'HSSC Pre-Med / Pre-Eng Card'}
+                        </p>
+                      </div>
+                      <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-indigo-50 border border-indigo-300 rounded text-[11px] font-bold text-indigo-900">
+                        <span>Browse Inter DMC</span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => addForm.setData('doc_inter_dmc', e.target.files?.[0] || null)}
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {/* CNIC / B-Form */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-stone-800">4. CNIC / B-Form Card</span>
+                        <span className="text-[9px] font-bold text-stone-600 bg-stone-200 px-1.5 py-0.5 rounded">Identity</span>
+                      </div>
+                      <p className="text-[10px] text-stone-500 mb-2 truncate">
+                        {addForm.data.doc_cnic_front?.name || 'National Identity / B-Form'}
+                      </p>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Browse CNIC / Form-B</span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => addForm.setData('doc_cnic_front', e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Domicile */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-stone-800">5. Domicile Certificate</span>
+                        <span className="text-[9px] font-bold text-stone-600 bg-stone-200 px-1.5 py-0.5 rounded">District</span>
+                      </div>
+                      <p className="text-[10px] text-stone-500 mb-2 truncate">
+                        {addForm.data.doc_domicile?.name || 'District Domicile Document'}
+                      </p>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Browse Domicile</span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => addForm.setData('doc_domicile', e.target.files?.[0] || null)}
+                      />
+                    </label>
                   </div>
                 </div>
               </div>
 
-              {/* Status & Photo */}
-              <div className="border-t border-stone-200 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              {/* Status */}
+              <div className="border-t border-stone-200 pt-4 text-xs">
                 <div>
                   <label className="block font-bold text-stone-700 mb-1">
                     Initial Scrutiny Status
@@ -827,45 +1075,10 @@ export default function ApplicationsIndex({
                     onChange={(e) => addForm.setData('verification_status', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-300 rounded-lg font-semibold"
                   >
-                    <option value="pending">Pending Scrutiny</option>
+                    <option value="pending">Pending Scrutiny (Review documents later)</option>
                     <option value="verified">Verified (Automatically Generates Roll # &amp; Clears for Exam)</option>
                     <option value="under_review">Under Review</option>
                   </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-stone-700 mb-1">
-                    Candidate Photo (Passport size)
-                  </label>
-                  <div className="flex items-center gap-3">
-                    {addPhotoPreview ? (
-                      <img
-                        src={addPhotoPreview}
-                        alt="Preview"
-                        className="w-12 h-12 rounded-lg object-cover border-2 border-[#07294D] shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-stone-100 border border-dashed border-stone-300 flex items-center justify-center shrink-0">
-                        <Upload className="w-5 h-5 text-stone-400" />
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        addForm.setData('photo', file);
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => setAddPhotoPreview(ev.target?.result as string);
-                          reader.readAsDataURL(file);
-                        } else {
-                          setAddPhotoPreview(null);
-                        }
-                      }}
-                      className="text-xs text-stone-500"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -937,6 +1150,31 @@ export default function ApplicationsIndex({
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="sm:col-span-3">
+                  {currentEditProgram && (
+                    <div className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-black text-xs px-2 py-0.5 bg-[#07294D] text-[#FFB606] rounded">
+                          {currentEditProgram.program?.code}
+                        </span>
+                        <span className="font-bold text-slate-800">
+                          {currentEditProgram.program?.name}
+                        </span>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border ${
+                        isEditBsProgram
+                          ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                          : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      }`}>
+                        <GraduationCap className="w-3 h-3" />
+                        <span>
+                          {isEditBsProgram ? '4-Year BS Degree (Matric + Inter Required)' : '2-Year Diploma (Matric Required)'}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1144,12 +1382,20 @@ export default function ApplicationsIndex({
                 </div>
               </div>
 
-              {/* Academic Credentials */}
+              {/* Dynamic Academic Credentials */}
               <div className="border-t border-stone-200 pt-4">
-                <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-[#07294D]" /> Academic Qualifications
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-[#07294D]" /> Academic Qualifications
+                  </h4>
+                  <span className="text-[11px] font-medium text-stone-500">
+                    {isEditBsProgram
+                      ? 'Matric (SSC) & Intermediate (HSSC) required for BS degree'
+                      : 'Matric (SSC) is the primary required qualification for Diplomas'}
+                  </span>
+                </div>
+
+                <div className={`grid grid-cols-1 ${isEditBsProgram ? 'sm:grid-cols-2' : ''} gap-4 text-xs`}>
                   {/* Matric */}
                   <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200 space-y-2.5">
                     <span className="font-bold text-stone-800 block text-xs">Matriculation (SSC)</span>
@@ -1183,70 +1429,164 @@ export default function ApplicationsIndex({
                   </div>
 
                   {/* Inter */}
-                  <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200 space-y-2.5">
-                    <span className="font-bold text-stone-800 block text-xs">Intermediate (HSSC)</span>
-                    <input
-                      type="text"
-                      placeholder="Board Name"
-                      value={editForm.data.inter_board}
-                      onChange={(e) => editForm.setData('inter_board', e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] text-stone-500 font-semibold">Total Marks</label>
-                        <input
-                          type="number"
-                          value={editForm.data.inter_total_marks}
-                          onChange={(e) => editForm.setData('inter_total_marks', Number(e.target.value))}
-                          className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-stone-500 font-semibold">Obtained Marks</label>
-                        <input
-                          type="number"
-                          value={editForm.data.inter_obtained_marks}
-                          onChange={(e) => editForm.setData('inter_obtained_marks', Number(e.target.value))}
-                          className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
-                        />
+                  {isEditBsProgram && (
+                    <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-200 space-y-2.5">
+                      <span className="font-bold text-indigo-900 block text-xs">Intermediate (HSSC Pre-Medical / Pre-Eng)</span>
+                      <input
+                        type="text"
+                        placeholder="Board Name"
+                        value={editForm.data.inter_board}
+                        onChange={(e) => editForm.setData('inter_board', e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-indigo-700 font-semibold">Total Marks</label>
+                          <input
+                            type="number"
+                            value={editForm.data.inter_total_marks}
+                            onChange={(e) => editForm.setData('inter_total_marks', Number(e.target.value))}
+                            className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-indigo-700 font-semibold">Obtained Marks</label>
+                          <input
+                            type="number"
+                            value={editForm.data.inter_obtained_marks}
+                            onChange={(e) => editForm.setData('inter_obtained_marks', Number(e.target.value))}
+                            className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {/* Update Photo */}
-              <div className="border-t border-stone-200 pt-4 text-xs">
-                <label className="block font-bold text-stone-700 mb-1">
-                  Replace Candidate Photo
-                </label>
-                <div className="flex items-center gap-3">
-                  {editPhotoPreview ? (
-                    <img
-                      src={editPhotoPreview}
-                      alt="Preview"
-                      className="w-12 h-12 rounded-lg object-cover border-2 border-[#07294D] shrink-0"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-stone-100 border border-dashed border-stone-300 flex items-center justify-center shrink-0">
-                      <Upload className="w-5 h-5 text-stone-400" />
+              {/* Dynamic Documents Upload / Replacement Panel */}
+              <div className="border-t border-stone-200 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileCheck className="w-4 h-4 text-[#07294D]" /> Application Documents
+                  </h4>
+                  <span className="text-[11px] text-stone-500">
+                    Upload new files to replace existing documents
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                  {/* Photo */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <span className="font-bold text-stone-800 block mb-2">1. Candidate Photo</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        {editPhotoPreview ? (
+                          <img src={editPhotoPreview} alt="Photo" className="w-10 h-10 rounded object-cover border border-[#07294D]" />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-white border border-dashed border-stone-300 flex items-center justify-center">
+                            <Upload className="w-4 h-4 text-stone-400" />
+                          </div>
+                        )}
+                        <span className="text-[10px] text-stone-500 truncate">{editForm.data.photo?.name || 'Current Photo'}</span>
+                      </div>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Replace Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          editForm.setData('photo', file);
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setEditPhotoPreview(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Matric DMC */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <span className="font-bold text-stone-800 block mb-2">2. Matric DMC</span>
+                      <p className="text-[10px] text-stone-500 mb-2 truncate">
+                        {editForm.data.doc_matric_dmc?.name || (editingApp.documents?.find((d: any) => d.document_type === 'matric_dmc')?.original_filename || 'No document uploaded')}
+                      </p>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Upload Matric DMC</span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => editForm.setData('doc_matric_dmc', e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Inter DMC (BS Only) */}
+                  {isEditBsProgram && (
+                    <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-200 flex flex-col justify-between">
+                      <div>
+                        <span className="font-bold text-indigo-900 block mb-2">3. Inter DMC (HSSC)</span>
+                        <p className="text-[10px] text-indigo-700 mb-2 truncate">
+                          {editForm.data.doc_inter_dmc?.name || (editingApp.documents?.find((d: any) => d.document_type === 'inter_dmc')?.original_filename || 'No document uploaded')}
+                        </p>
+                      </div>
+                      <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-indigo-50 border border-indigo-300 rounded text-[11px] font-bold text-indigo-900">
+                        <span>Upload Inter DMC</span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => editForm.setData('doc_inter_dmc', e.target.files?.[0] || null)}
+                        />
+                      </label>
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      editForm.setData('photo', file);
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => setEditPhotoPreview(ev.target?.result as string);
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className="text-xs text-stone-500"
-                  />
+
+                  {/* CNIC / B-Form */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <span className="font-bold text-stone-800 block mb-2">4. CNIC / Form-B</span>
+                      <p className="text-[10px] text-stone-500 mb-2 truncate">
+                        {editForm.data.doc_cnic_front?.name || (editingApp.documents?.find((d: any) => d.document_type === 'cnic_front')?.original_filename || 'No document uploaded')}
+                      </p>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Upload CNIC</span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => editForm.setData('doc_cnic_front', e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Domicile */}
+                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col justify-between">
+                    <div>
+                      <span className="font-bold text-stone-800 block mb-2">5. Domicile</span>
+                      <p className="text-[10px] text-stone-500 mb-2 truncate">
+                        {editForm.data.doc_domicile?.name || (editingApp.documents?.find((d: any) => d.document_type === 'domicile')?.original_filename || 'No document uploaded')}
+                      </p>
+                    </div>
+                    <label className="cursor-pointer inline-flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-stone-100 border border-stone-300 rounded text-[11px] font-bold text-stone-700">
+                      <span>Upload Domicile</span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => editForm.setData('doc_domicile', e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
 
