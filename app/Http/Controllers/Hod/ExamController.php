@@ -64,7 +64,10 @@ class ExamController extends Controller
         $stats = [
             'total_tests' => Examination::count(),
             'active_tests' => Examination::where('status', 'active')->count(),
-            'total_questions' => ExaminationQuestion::count(),
+            'eligible_candidates' => \App\Models\Application::where(function ($q) {
+                $q->where('exam_eligibility_status', 'eligible')
+                  ->orWhereNotNull('roll_number');
+            })->count(),
             'student_attempts' => ExaminationAttempt::count(),
         ];
 

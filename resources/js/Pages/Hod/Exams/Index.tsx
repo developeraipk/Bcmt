@@ -26,6 +26,8 @@ import {
   Unlock,
   X,
   Save,
+  UserCheck,
+  FileText,
 } from 'lucide-react';
 
 interface Examination {
@@ -74,7 +76,8 @@ interface Props {
   stats: {
     total_tests: number;
     active_tests: number;
-    total_questions: number;
+    total_questions?: number;
+    eligible_candidates?: number;
     student_attempts: number;
   };
 }
@@ -317,14 +320,14 @@ export default function ExamsIndex({
           </div>
         </div>
 
-        {/* Card 3: Total Questions */}
+        {/* Card 3: Eligible Examinees */}
         <div className="bg-gradient-to-br from-[#0A3663] to-[#07294D] text-white rounded-2xl p-5 shadow-sm border-b-4 border-[#FFB606] flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#FFB606] block">Total Exam Questions</span>
-            <span className="text-3xl sm:text-4xl font-extrabold font-mono mt-1 block">{stats.total_questions}</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#FFB606] block">Eligible Examinees</span>
+            <span className="text-3xl sm:text-4xl font-extrabold font-mono mt-1 block">{stats.eligible_candidates ?? stats.total_questions ?? 0}</span>
           </div>
           <div className="p-3 bg-white/10 rounded-xl">
-            <HelpCircle className="w-8 h-8 text-[#FFB606]" />
+            <UserCheck className="w-8 h-8 text-[#FFB606]" />
           </div>
         </div>
 
@@ -349,7 +352,7 @@ export default function ExamsIndex({
                 <th className="p-4">Test Title</th>
                 <th className="p-4">Course & Batch</th>
                 <th className="p-4">Shift</th>
-                <th className="p-4 text-center">Questions</th>
+                <th className="p-4 text-center">Assessment Paper</th>
                 <th className="p-4">Duration / Pass</th>
                 <th className="p-4">Exam Hall PIN</th>
                 <th className="p-4 text-center">Live Status</th>
@@ -395,14 +398,15 @@ export default function ExamsIndex({
                       </span>
                     </td>
 
-                    {/* Questions */}
+                    {/* Assessment Paper */}
                     <td className="p-4 text-center">
                       <Link
                         href={`/hod/exams/${exam.id}/questions`}
-                        title="Click to view and add questions"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition"
+                        title="Click to view and configure examination paper"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shadow-2xs"
                       >
-                        <span>{questionsCount} Qs</span>
+                        <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Manage Paper</span>
                       </Link>
                     </td>
 

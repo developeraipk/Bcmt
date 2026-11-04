@@ -17,6 +17,19 @@ class RollNumberSchedulingTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_admin_can_view_roll_numbers_index_page(): void
+    {
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@bcmt.edu.pk'],
+            ['name' => 'Admin', 'password' => bcrypt('password')]
+        );
+        $admin->assignRole('super_admin');
+
+        $response = $this->actingAs($admin)->get('/admin/roll-numbers');
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page->component('Admin/RollNumbers/Index'));
+    }
+
     public function test_admin_can_assign_schedule_and_roll_numbers_in_bulk(): void
     {
         $admin = User::firstOrCreate(

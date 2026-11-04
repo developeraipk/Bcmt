@@ -56,7 +56,7 @@ export default function SessionsIndex({ sessions }: Props) {
         </div>
 
         <Link
-          href="/admin/sessions/create"
+          href={route('admin.sessions.create')}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs transition shrink-0"
         >
           <Plus className="w-4 h-4 text-[#FFB606]" /> New Admission Session

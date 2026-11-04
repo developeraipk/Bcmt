@@ -77,13 +77,17 @@ interface Props {
 export default function RollNumbersIndex({
   unscheduledCandidates = [],
   scheduledCandidates = [],
-  counts,
-  sessions,
-  programs,
+  counts = { total_eligible: 0, unscheduled: 0, scheduled: 0 },
+  sessions = [],
+  programs = [],
   examinations = [],
-  selectedSessionId,
-  selectedProgramId,
+  selectedSessionId = 0,
+  selectedProgramId = null,
 }: Props) {
+  const safeUnscheduled = Array.isArray(unscheduledCandidates) ? unscheduledCandidates : [];
+  const safeScheduled = Array.isArray(scheduledCandidates) ? scheduledCandidates : [];
+  const safePrograms = Array.isArray(programs) ? programs : [];
+
   const [activeTab, setActiveTab] = useState<'queue' | 'scheduled'>('queue');
 
   // Filter States
@@ -119,30 +123,31 @@ export default function RollNumbersIndex({
 
   // Client-side filtering of Unscheduled Queue
   const filteredQueue = useMemo(() => {
-    return unscheduledCandidates.filter((cand) => {
+    return safeUnscheduled.filter((cand) => {
+      if (!cand) return false;
       // Course filter
       if (filterCourse && String(cand.program_id) !== filterCourse) {
         return false;
       }
       // Gender filter
-      if (filterGender && cand.gender.toLowerCase() !== filterGender.toLowerCase()) {
+      if (filterGender && (cand.gender || '').toLowerCase() !== filterGender.toLowerCase()) {
         return false;
       }
       // Search filter (Name, Phone, CNIC)
       if (filterSearch) {
         const q = filterSearch.toLowerCase().trim();
-        const matchesName = cand.student_name.toLowerCase().includes(q);
-        const matchesFather = cand.father_name.toLowerCase().includes(q);
-        const matchesCnic = cand.cnic.replace(/\D/g, '').includes(q.replace(/\D/g, ''));
-        const matchesPhone = cand.contact.toLowerCase().includes(q);
-        const matchesAppNo = cand.application_number.toLowerCase().includes(q);
+        const matchesName = (cand.student_name || '').toLowerCase().includes(q);
+        const matchesFather = (cand.father_name || '').toLowerCase().includes(q);
+        const matchesCnic = (cand.cnic || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''));
+        const matchesPhone = (cand.contact || '').toLowerCase().includes(q);
+        const matchesAppNo = (cand.application_number || '').toLowerCase().includes(q);
         if (!matchesName && !matchesFather && !matchesCnic && !matchesPhone && !matchesAppNo) {
           return false;
         }
       }
       return true;
     });
-  }, [unscheduledCandidates, filterCourse, filterGender, filterSearch]);
+  }, [safeUnscheduled, filterCourse, filterGender, filterSearch]);
 
   // Batch Selection Helpers
   const handleSelectBatch = (count: number) => {
@@ -349,7 +354,7 @@ export default function RollNumbersIndex({
                 className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold text-stone-800 focus:outline-none focus:ring-2 focus:ring-[#07294D]"
               >
                 <option value="">All Courses</option>
-                {programs.map((p) => (
+                {safePrograms.map((p) => (
                   <option key={p.id} value={String(p.id)}>
                     {p.name} ({p.code})
                   </option>
@@ -656,15 +661,15 @@ export default function RollNumbersIndex({
                               />
                             ) : (
                               <div className="w-9 h-9 rounded-full bg-[#07294D] text-[#FFB606] font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
-                                {cand.student_name.charAt(0).toUpperCase()}
+                                {(cand.student_name || 'C').charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div>
                               <span className="font-bold text-stone-900 block text-xs sm:text-sm">
-                                {cand.student_name}
+                                {cand.student_name || 'Candidate'}
                               </span>
                               <span className="text-[11px] text-stone-500 block">
-                                S/O, D/O: {cand.father_name}
+                                S/O, D/O: {cand.father_name || 'N/A'}
                               </span>
                             </div>
                           </div>
@@ -672,12 +677,12 @@ export default function RollNumbersIndex({
                         <td className="p-4">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize ${
-                              cand.gender.toLowerCase() === 'female'
+                              (cand.gender || 'male').toLowerCase() === 'female'
                                 ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                 : 'bg-blue-50 text-blue-700 border border-blue-200'
                             }`}
                           >
-                            {cand.gender}
+                            {cand.gender || 'Male'}
                           </span>
                         </td>
                         <td className="p-4">
@@ -796,15 +801,15 @@ export default function RollNumbersIndex({
                             />
                           ) : (
                             <div className="w-9 h-9 rounded-full bg-[#07294D] text-[#FFB606] font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
-                              {cand.student_name.charAt(0).toUpperCase()}
+                              {(cand.student_name || 'C').charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div>
                             <span className="font-bold text-stone-900 block text-xs sm:text-sm">
-                              {cand.student_name}
+                              {cand.student_name || 'Candidate'}
                             </span>
                             <span className="text-[11px] text-stone-500 block font-mono">
-                              #{cand.application_number} • S/O {cand.father_name}
+                              #{cand.application_number} • S/O {cand.father_name || 'N/A'}
                             </span>
                           </div>
                         </div>

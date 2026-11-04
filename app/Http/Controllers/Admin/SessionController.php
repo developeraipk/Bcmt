@@ -27,7 +27,10 @@ class SessionController extends Controller
 
     public function create(): Response
     {
-        $programs = Program::where('is_active', true)->get();
+        $programs = Program::where('is_active', true)->orderBy('name')->get();
+        if ($programs->isEmpty()) {
+            $programs = Program::orderBy('name')->get();
+        }
 
         return Inertia::render('Admin/Sessions/Create', [
             'programs' => $programs,

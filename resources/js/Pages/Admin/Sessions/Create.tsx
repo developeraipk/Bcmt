@@ -1,25 +1,29 @@
 import React from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { Calendar, ArrowLeft, PlusCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Calendar, ArrowLeft, PlusCircle, CheckCircle2, AlertTriangle, Building2, Sparkles } from 'lucide-react';
+import route from '@/route';
 
 interface Program {
   id: number;
   name: string;
-  code: string;
-  category: string;
-  duration_years: number;
+  code?: string;
+  category?: string;
+  duration_years?: number;
 }
 
 interface Props {
-  programs: Program[];
+  programs?: Program[];
 }
 
-export default function SessionsCreate({ programs }: Props) {
+export default function SessionsCreate({ programs = [] }: Props) {
+  const safePrograms: Program[] = Array.isArray(programs) ? programs : [];
+  
+  // Safe initial seat allocations matching official intake quotas
   const initialSeats: Record<number, number> = {};
-  programs.forEach((p) => {
-    // Default allocations matching official approved seats
-    const c = p.code.replace(/[^A-Z]/g, '');
+  safePrograms.forEach((p) => {
+    if (!p) return;
+    const c = String(p.code || '').replace(/[^A-Za-z]/g, '').toUpperCase();
     if (c === 'BSECT') initialSeats[p.id] = 20;
     else if (c === 'BSMLT') initialSeats[p.id] = 30;
     else if (c === 'PCB' || c === 'PHARMB') initialSeats[p.id] = 50;
@@ -64,17 +68,19 @@ export default function SessionsCreate({ programs }: Props) {
   const handleSeatChange = (programId: number, val: string) => {
     const seats = parseInt(val, 10) || 0;
     setData('program_seats', {
-      ...data.program_seats,
+      ...(data.program_seats || {}),
       [programId]: seats,
     });
   };
 
-  const totalSeats = Object.values(data.program_seats).reduce((sum, n) => sum + Number(n), 0);
+  const totalSeats = Object.values(data.program_seats || {}).reduce((sum, n) => sum + Number(n || 0), 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     post('/admin/sessions');
   };
+
+  const safeErrors = errors || {};
 
   return (
     <AdminLayout>
@@ -82,20 +88,20 @@ export default function SessionsCreate({ programs }: Props) {
 
       <div className="max-w-4xl mx-auto py-6">
         <Link
-          href="/admin/sessions"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-800 mb-6 transition"
+          href={route('admin.sessions.index')}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-6 transition"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Admission Sessions
         </Link>
 
         {/* Global Validation Error Banner */}
-        {Object.keys(errors).length > 0 && (
+        {Object.keys(safeErrors).length > 0 && (
           <div className="p-4 bg-rose-50 border border-rose-300 rounded-2xl text-rose-800 text-xs mb-6 flex items-start gap-3 shadow-xs">
             <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
             <div>
               <strong className="block font-bold mb-1 text-sm">Please resolve the following before saving:</strong>
               <ul className="list-disc pl-4 space-y-0.5">
-                {Object.entries(errors).map(([field, msg]) => (
+                {Object.entries(safeErrors).map(([field, msg]) => (
                   <li key={field}>{msg}</li>
                 ))}
               </ul>
@@ -103,27 +109,32 @@ export default function SessionsCreate({ programs }: Props) {
           </div>
         )}
 
-        <div className="bg-white rounded-3xl border border-stone-200 shadow-sm p-6 sm:p-8">
-          <div className="flex items-center justify-between pb-6 mb-6 border-b border-stone-100">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-100">
             <div>
               <span className="text-xs font-bold text-[#07294D] uppercase tracking-wider bg-[#07294D]/10 px-3 py-1 rounded-full">
                 New Academic Cycle
               </span>
-              <h1 className="text-2xl font-serif font-bold text-stone-900 mt-2">
+              <h1 className="text-2xl font-serif font-bold text-slate-900 mt-2">
                 Configure Admission Session
               </h1>
+              <p className="text-xs text-slate-500 mt-1">
+                Establish an official academic term, application deadlines, and program seat quotas.
+              </p>
             </div>
-            <div className="bg-stone-50 border border-stone-200 rounded-2xl p-3.5 text-right">
-              <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">Total Cohort Capacity</span>
-              <span className="text-2xl font-black font-mono text-[#07294D]">{totalSeats} <span className="text-xs font-bold text-stone-500">Seats</span></span>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-left sm:text-right shrink-0">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Cohort Intake</span>
+              <span className="text-2xl font-black font-mono text-[#07294D]">
+                {totalSeats} <span className="text-xs font-bold text-slate-500">Seats</span>
+              </span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Session Name (e.g. Session 2027-2028) <span className="text-rose-600">*</span>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Session Name (e.g. Admission Session 2027-2028) <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -131,106 +142,126 @@ export default function SessionsCreate({ programs }: Props) {
                   placeholder="e.g. Admission Session 2027-2028"
                   value={data.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-hidden"
                 />
-                {errors.name && <p className="text-rose-600 text-xs mt-1">{errors.name}</p>}
+                {safeErrors.name && <p className="text-rose-600 text-xs mt-1">{safeErrors.name}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Session Code (Unique)
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Session Code (e.g. 2027-2028) <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 2026-2027"
+                  placeholder="e.g. 2027-2028"
                   value={data.code}
                   onChange={(e) => setData('code', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-none font-mono"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-hidden font-mono"
                 />
-                {errors.code && <p className="text-rose-600 text-xs mt-1">{errors.code}</p>}
+                {safeErrors.code && <p className="text-rose-600 text-xs mt-1">{safeErrors.code}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Application Portal Opening Date
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Application Portal Opening Date <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="date"
                   required
                   value={data.start_date}
                   onChange={(e) => setData('start_date', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-hidden"
                 />
-                {errors.start_date && <p className="text-rose-600 text-xs mt-1">{errors.start_date}</p>}
+                {safeErrors.start_date && <p className="text-rose-600 text-xs mt-1">{safeErrors.start_date}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Application Submission Closing Date
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Application Submission Closing Date <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="date"
                   required
                   value={data.closing_date}
                   onChange={(e) => setData('closing_date', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-hidden"
                 />
-                {errors.closing_date && <p className="text-rose-600 text-xs mt-1">{errors.closing_date}</p>}
+                {safeErrors.closing_date && <p className="text-rose-600 text-xs mt-1">{safeErrors.closing_date}</p>}
               </div>
             </div>
 
             <div>
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
                 <input
                   type="checkbox"
                   checked={data.is_active}
                   onChange={(e) => setData('is_active', e.target.checked)}
-                  className="w-4 h-4 rounded text-[#07294D] focus:ring-[#07294D] border-stone-300"
+                  className="w-4 h-4 rounded text-[#07294D] focus:ring-[#07294D] border-slate-300"
                 />
                 <span>Set as Current Active Admission Session for Candidate Applications</span>
               </label>
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Official Admission Instructions (Publicly Displayed on Portal)
+              </label>
+              <textarea
+                rows={3}
+                value={data.admission_instructions}
+                onChange={(e) => setData('admission_instructions', e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:ring-2 focus:ring-[#07294D] focus:outline-hidden"
+              />
+            </div>
+
             {/* Program Seats Allocation Grid */}
-            <div className="pt-4 border-t border-stone-100">
-              <h3 className="text-sm font-bold text-stone-900 mb-1">Program Seat Allocations</h3>
-              <p className="text-xs text-stone-500 mb-4">
+            <div className="pt-4 border-t border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 mb-1">Approved Program Seat Allocations</h3>
+              <p className="text-xs text-slate-500 mb-4">
                 Define the authorized student intake capacity for each degree and diploma program.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {programs.map((prog) => (
-                  <div key={prog.id} className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-                    <span className="font-bold text-stone-900 text-xs block truncate">{prog.name}</span>
-                    <span className="text-[10px] text-stone-500 uppercase">{prog.category}</span>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-xs font-semibold text-stone-600">Seats:</span>
+                {safePrograms.map((prog) => (
+                  <div key={prog.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="font-bold text-slate-900 text-xs block truncate">{prog.name}</span>
+                    <span className="text-[10px] text-slate-500 uppercase font-mono">
+                      {prog.code || 'CODE'} • {prog.category || 'Diploma'}
+                    </span>
+                    <div className="mt-2 flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60">
+                      <span className="text-xs font-semibold text-slate-600">Approved Seats:</span>
                       <input
                         type="number"
                         min={0}
                         max={500}
-                        value={data.program_seats[prog.id] || 0}
+                        value={data.program_seats?.[prog.id] ?? 0}
                         onChange={(e) => handleSeatChange(prog.id, e.target.value)}
-                        className="w-24 px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-bold text-stone-900 focus:ring-1 focus:ring-[#07294D]"
+                        className="w-24 px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:ring-1 focus:ring-[#07294D] text-right font-mono"
                       />
                     </div>
                   </div>
                 ))}
+
+                {safePrograms.length === 0 && (
+                  <div className="col-span-3 p-4 bg-amber-50 text-amber-800 rounded-xl text-xs">
+                    No active academic programs found. You can configure program seats after activating programs.
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-stone-100 flex justify-end gap-3">
+            <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
               <Link
-                href="/admin/sessions"
-                className="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold transition"
+                href={route('admin.sessions.index')}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={processing}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4 text-[#FFB606]" />
                 {processing ? 'Creating Session...' : 'Save & Publish Session'}
@@ -242,4 +273,3 @@ export default function SessionsCreate({ programs }: Props) {
     </AdminLayout>
   );
 }
-
