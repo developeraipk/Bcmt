@@ -73,8 +73,9 @@ class ApplicationManagementAndCascadingDeleteTest extends TestCase
         $this->assertEquals(920, (int) $matric->obtained_marks);
     }
 
-    public function test_admin_and_hod_can_update_application_and_credentials()
+    public function test_admin_can_update_application_and_credentials_while_hod_is_forbidden()
     {
+        $admin = User::where('email', 'admin@bcmt.edu.pk')->first();
         $hod = User::where('email', 'hod@bcmt.edu.pk')->first();
         $session = AdmissionSession::getActive();
         $sessionProgram = SessionProgram::where('admission_session_id', $session->id)->first();
@@ -108,7 +109,7 @@ class ApplicationManagementAndCascadingDeleteTest extends TestCase
             'email' => $user->email,
         ]);
 
-        $response = $this->actingAs($hod)->post("/admin/applications/{$app->id}/update", [
+        $updateData = [
             'session_program_id' => $sessionProgram->id,
             'full_name' => 'Updated Candidate Name',
             'father_name' => 'Updated Father Name',
@@ -124,7 +125,14 @@ class ApplicationManagementAndCascadingDeleteTest extends TestCase
             'inter_board' => 'BISE Bannu',
             'inter_total_marks' => 1100,
             'inter_obtained_marks' => 910,
-        ]);
+        ];
+
+        // HOD must NOT have access to Admin Portal (403 Forbidden)
+        $hodResponse = $this->actingAs($hod)->post("/admin/applications/{$app->id}/update", $updateData);
+        $hodResponse->assertForbidden();
+
+        // Admin has full access
+        $response = $this->actingAs($admin)->post("/admin/applications/{$app->id}/update", $updateData);
 
         $response->assertSessionHasNoErrors();
         $response->assertRedirect();

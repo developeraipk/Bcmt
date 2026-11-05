@@ -92,7 +92,7 @@ Route::middleware(['auth', 'role:student,super_admin'])->prefix('student')->name
 | Administrative Portal Routes (Protected)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:super_admin,management,admission_officer,document_verifier,hod'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:super_admin,management,admission_officer,document_verifier'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     
     // Session Management
@@ -138,20 +138,24 @@ Route::middleware(['auth', 'role:super_admin,management,admission_officer,docume
     Route::post('/seat-allocation/unrelease/{id}', [AdminSeatAllocationController::class, 'unrelease'])->name('seat-allocation.unrelease');
     Route::delete('/seat-allocation/{id}', [AdminSeatAllocationController::class, 'destroy'])->name('seat-allocation.destroy');
 
-    // Entrance Test Results Access for Super Admin
-    Route::get('/results', [\App\Http\Controllers\Hod\ResultController::class, 'index'])->name('results.index');
-    Route::get('/results/export', [\App\Http\Controllers\Hod\ResultController::class, 'export'])->name('results.export');
-    Route::get('/results/print', [\App\Http\Controllers\Hod\ResultController::class, 'printGazette'])->name('results.print');
+    // Entrance Test Results Access for Super Admin / Management
+    Route::middleware(['role:super_admin,management'])->group(function () {
+        Route::get('/results', [\App\Http\Controllers\Hod\ResultController::class, 'index'])->name('results.index');
+        Route::get('/results/export', [\App\Http\Controllers\Hod\ResultController::class, 'export'])->name('results.export');
+        Route::get('/results/print', [\App\Http\Controllers\Hod\ResultController::class, 'printGazette'])->name('results.print');
+    });
 
-    // Settings & Logs
-    Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
-    Route::post('/password/update-own', [AdminSettingsController::class, 'updateOwnPassword'])->name('password.update-own');
-    Route::post('/users/{id}/password', [AdminSettingsController::class, 'updateUserPassword'])->name('users.password.update');
-    Route::get('/audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::delete('/audit-logs/clear', [AdminAuditLogController::class, 'clearAll'])->name('audit-logs.clear');
-    Route::delete('/audit-logs/{id}', [AdminAuditLogController::class, 'destroy'])->name('audit-logs.destroy');
-    Route::post('/audit-logs/{id}/revoke-actor', [AdminAuditLogController::class, 'revokeActor'])->name('audit-logs.revoke-actor');
+    // Settings & Logs (Privileged: Super Admin & Management only)
+    Route::middleware(['role:super_admin,management'])->group(function () {
+        Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+        Route::post('/password/update-own', [AdminSettingsController::class, 'updateOwnPassword'])->name('password.update-own');
+        Route::post('/users/{id}/password', [AdminSettingsController::class, 'updateUserPassword'])->name('users.password.update');
+        Route::get('/audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::delete('/audit-logs/clear', [AdminAuditLogController::class, 'clearAll'])->name('audit-logs.clear');
+        Route::delete('/audit-logs/{id}', [AdminAuditLogController::class, 'destroy'])->name('audit-logs.destroy');
+        Route::post('/audit-logs/{id}/revoke-actor', [AdminAuditLogController::class, 'revokeActor'])->name('audit-logs.revoke-actor');
+    });
 });
 
 /*

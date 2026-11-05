@@ -16,8 +16,6 @@ import {
     ExternalLink,
     GraduationCap,
     Clock,
-    BookOpen,
-    Award,
 } from 'lucide-react';
 
 interface Props {
@@ -30,17 +28,25 @@ export const AdminLayout: React.FC<Props> = ({ children, title }) => {
     const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
     const user = auth?.user;
+    const roles: string[] = Array.isArray(user?.roles) ? user.roles : [];
+    const isSuperAdmin = roles.includes('super_admin');
+    const isManagement = roles.includes('management');
+
+    // Privileged features strictly for Super Admin & Management
+    // Admission Processing Officers have Settings, Audit Logs, and Integrated Portals hidden
+    const isExecutiveAdmin = isSuperAdmin || isManagement;
+    const canAccessIntegratedPortals = isExecutiveAdmin;
 
     const navItems = [
         { label: 'Executive Analytics', icon: LayoutDashboard, href: route('admin.dashboard'), active: route().current('admin.dashboard') },
         { label: 'Admission Sessions', icon: Calendar, href: route('admin.sessions.index'), active: route().current('admin.sessions.*') },
         { label: 'Applications & Verification', icon: Users, href: route('admin.applications.index'), active: route().current('admin.applications.*') },
         { label: 'Roll Numbers & Slips', icon: FileCheck, href: route('admin.roll-numbers.index'), active: route().current('admin.roll-numbers.*') },
-        { label: 'Admission Tests & PINs', icon: BookOpen, href: route('hod.exams.index'), active: route().current('hod.exams.*') },
-        { label: 'Entrance Test Results', icon: Award, href: route('hod.results.index'), active: route().current('*.results.*') },
         { label: 'Seat Allocation Engine', icon: Armchair, href: route('admin.seat-allocation.index'), active: route().current('admin.seat-allocation.*') },
-        { label: 'System & WhatsApp Settings', icon: Settings, href: route('admin.settings.index'), active: route().current('admin.settings.*') },
-        { label: 'Audit & Security Logs', icon: Shield, href: route('admin.audit-logs.index'), active: route().current('admin.audit-logs.*') },
+        ...(isExecutiveAdmin ? [
+            { label: 'System & WhatsApp Settings', icon: Settings, href: route('admin.settings.index'), active: route().current('admin.settings.*') },
+            { label: 'Audit & Security Logs', icon: Shield, href: route('admin.audit-logs.index'), active: route().current('admin.audit-logs.*') },
+        ] : []),
     ];
 
     return (
@@ -107,24 +113,28 @@ export const AdminLayout: React.FC<Props> = ({ children, title }) => {
                         );
                     })}
 
-                    <div className="pt-4 pb-1">
-                        <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Integrated Portals</p>
-                    </div>
+                    {canAccessIntegratedPortals && (
+                        <>
+                            <div className="pt-4 pb-1">
+                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Integrated Portals</p>
+                            </div>
 
-                    <Link
-                        href={route('hod.dashboard')}
-                        className="flex items-center gap-3 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
-                    >
-                        <GraduationCap className="h-4 w-4 text-slate-400" />
-                        <span>HOD Examination Portal</span>
-                    </Link>
-                    <Link
-                        href={route('invigilator.dashboard')}
-                        className="flex items-center gap-3 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
-                    >
-                        <Clock className="h-4 w-4 text-emerald-400" />
-                        <span>Invigilation Portal</span>
-                    </Link>
+                            <Link
+                                href={route('hod.dashboard')}
+                                className="flex items-center gap-3 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+                            >
+                                <GraduationCap className="h-4 w-4 text-slate-400" />
+                                <span>HOD Examination Portal</span>
+                            </Link>
+                            <Link
+                                href={route('invigilator.dashboard')}
+                                className="flex items-center gap-3 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+                            >
+                                <Clock className="h-4 w-4 text-emerald-400" />
+                                <span>Invigilation Portal</span>
+                            </Link>
+                        </>
+                    )}
                 </nav>
 
                 {/* Logout Button */}

@@ -68,6 +68,18 @@
         background-color: #FFB606;
         color: #07294D;
     }
+
+}
+
+/* Suppress Microsoft Edge native password reveal and clear icons to avoid duplicate eye icons */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input::-ms-reveal,
+input::-ms-clear {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
 }
 
 /* Custom Sleek Dark Sidebar Scrollbar */

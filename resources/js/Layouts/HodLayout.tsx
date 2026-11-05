@@ -8,7 +8,6 @@ import {
     HelpCircle,
     Sliders,
     Award,
-    Users,
     LogOut,
     Menu,
     X,
@@ -26,10 +25,11 @@ export const HodLayout: React.FC<Props> = ({ children, title }) => {
     const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
     const user = auth?.user;
+    const roles: string[] = Array.isArray(user?.roles) ? user.roles : [];
+    const isSuperAdmin = roles.includes('super_admin') || roles.includes('management');
 
     const navItems = [
         { label: 'HOD Overview', icon: GraduationCap, href: route('hod.dashboard'), active: route().current('hod.dashboard') },
-        { label: 'Candidate Applications', icon: Users, href: route('admin.applications.index'), active: route().current('admin.applications.*') },
         { label: 'Admission Tests & PINs', icon: BookOpen, href: route('hod.exams.index'), active: route().current('hod.exams.*') },
         { label: 'Test Results & Actions', icon: Award, href: route('hod.results.index'), active: route().current('hod.results.*') },
         { label: 'Dynamic Merit Formulas', icon: Sliders, href: route('hod.merit.index'), active: route().current('hod.merit.*') },
@@ -67,11 +67,13 @@ export const HodLayout: React.FC<Props> = ({ children, title }) => {
                 <div className="p-4 mx-3 my-4 rounded-xl bg-white/5 border border-white/10 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-lg bg-slate-800 text-white font-bold flex items-center justify-center shrink-0 border border-slate-700">
-                            H
+                            {isSuperAdmin ? (user?.name?.charAt(0) || 'A') : 'H'}
                         </div>
                         <div className="overflow-hidden">
                             <h4 className="text-sm font-bold text-white truncate">{user?.name}</h4>
-                            <p className="text-[11px] text-slate-300">Head of Department</p>
+                            <p className="text-[11px] text-slate-300">
+                                {isSuperAdmin ? 'System Administrator' : 'Head of Department'}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -96,17 +98,22 @@ export const HodLayout: React.FC<Props> = ({ children, title }) => {
                         );
                     })}
 
-                    <div className="pt-5 pb-1">
-                        <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Navigation</p>
-                    </div>
+                    {/* Return to Admin Panel: ONLY visible to System Administrator / Super Admin */}
+                    {isSuperAdmin && (
+                        <>
+                            <div className="pt-5 pb-1">
+                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Navigation</p>
+                            </div>
 
-                    <Link
-                        href={route('admin.dashboard')}
-                        className="flex items-center gap-3 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        <span>College Admin Portal</span>
-                    </Link>
+                            <Link
+                                href={route('admin.dashboard')}
+                                className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold text-amber-300/90 hover:text-white hover:bg-white/10 transition-colors border border-amber-500/20 bg-amber-500/5 shadow-xs"
+                            >
+                                <ArrowLeft className="h-4 w-4 text-amber-300 shrink-0" />
+                                <span>Return to Admin Panel</span>
+                            </Link>
+                        </>
+                    )}
                 </nav>
 
                 <div className="p-4 border-t border-slate-800 shrink-0">
@@ -135,7 +142,7 @@ export const HodLayout: React.FC<Props> = ({ children, title }) => {
                     </div>
 
                     <div className="text-xs text-slate-700 font-medium">
-                        Authenticated HOD: <strong className="text-slate-900">{user?.name}</strong>
+                        Authenticated {isSuperAdmin ? 'Administrator' : 'HOD'}: <strong className="text-slate-900">{user?.name}</strong>
                     </div>
                 </header>
 
