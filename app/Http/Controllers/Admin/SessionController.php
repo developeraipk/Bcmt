@@ -19,10 +19,34 @@ class SessionController extends Controller
     {
         $sessions = AdmissionSession::withCount(['applications', 'sessionPrograms'])
             ->orderByDesc('id')
-            ->get();
+            ->get()
+            ->map(function ($s) {
+                return array_merge($s->toArray(), [
+                    'is_open' => $s->isOpen(),
+                    'is_expired' => $s->isExpired(),
+                    'closing_time' => $s->closing_time ?: '23:59',
+                    'closing_datetime' => $s->closing_datetime->format('Y-m-d H:i:s'),
+                    'closing_datetime_formatted' => $s->closing_datetime->format('d M, Y \a\t h:i A'),
+                    'time_remaining' => $s->time_remaining,
+                ]);
+            });
+
+        $activeSession = AdmissionSession::getActive();
+        $activeSessionData = null;
+        if ($activeSession) {
+            $activeSessionData = array_merge($activeSession->toArray(), [
+                'is_open' => $activeSession->isOpen(),
+                'is_expired' => $activeSession->isExpired(),
+                'closing_time' => $activeSession->closing_time ?: '23:59',
+                'closing_datetime' => $activeSession->closing_datetime->format('Y-m-d H:i:s'),
+                'closing_datetime_formatted' => $activeSession->closing_datetime->format('d M, Y \a\t h:i A'),
+                'time_remaining' => $activeSession->time_remaining,
+            ]);
+        }
 
         return Inertia::render('Admin/Sessions/Index', [
             'sessions' => $sessions,
+            'activeSession' => $activeSessionData,
         ]);
     }
 
@@ -63,6 +87,7 @@ class SessionController extends Controller
             ],
             'start_date' => ['required', 'date'],
             'closing_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'closing_time' => ['nullable', 'string', 'max:10'],
             'is_active' => ['nullable', 'boolean'],
             'admission_instructions' => ['nullable', 'string'],
             'program_seats' => ['nullable', 'array'],
@@ -79,6 +104,7 @@ class SessionController extends Controller
                 'code' => $request->input('code'),
                 'start_date' => $request->input('start_date'),
                 'closing_date' => $request->input('closing_date'),
+                'closing_time' => $request->input('closing_time', '23:59') ?: '23:59',
                 'status' => 'open',
                 'is_active' => $request->boolean('is_active'),
                 'admission_instructions' => $request->input('admission_instructions'),
@@ -125,6 +151,7 @@ class SessionController extends Controller
             'status' => ['required', 'in:draft,open,closed,archived'],
             'start_date' => ['required', 'date'],
             'closing_date' => ['required', 'date', 'after:start_date'],
+            'closing_time' => ['nullable', 'string', 'max:10'],
             'is_active' => ['boolean'],
             'admission_instructions' => ['nullable', 'string'],
             'program_seats' => ['nullable', 'array'],
@@ -142,6 +169,7 @@ class SessionController extends Controller
                 'status' => $request->input('status'),
                 'start_date' => $request->input('start_date'),
                 'closing_date' => $request->input('closing_date'),
+                'closing_time' => $request->input('closing_time', $session->closing_time ?: '23:59') ?: '23:59',
                 'is_active' => $becameActive,
                 'admission_instructions' => $request->input('admission_instructions'),
             ]);
@@ -180,6 +208,49 @@ class SessionController extends Controller
         });
 
         return redirect()->route('admin.sessions.index')->with('success', 'Admission session updated successfully.');
+    }
+
+    public function toggleStatus(Request $request, int $id)
+    {
+        $session = AdmissionSession::findOrFail($id);
+
+        if ($session->status === 'open') {
+            $session->update(['status' => 'closed']);
+            AuditLog::log('session_closed', 'AdmissionSession', $session->id);
+            return back()->with('success', "Admissions for '{$session->name}' are now CLOSED. Online applications are paused.");
+        } else {
+            $data = ['status' => 'open'];
+            // If deadline expired, give it 7 days fresh deadline
+            if ($session->isExpired()) {
+                $data['closing_date'] = now()->addDays(7)->toDateString();
+                $data['closing_time'] = '23:59';
+            }
+            $session->update($data);
+            AuditLog::log('session_opened', 'AdmissionSession', $session->id);
+            return back()->with('success', "Admissions for '{$session->name}' are now OPEN. Candidates can submit applications.");
+        }
+    }
+
+    public function setDeadline(Request $request, int $id)
+    {
+        $session = AdmissionSession::findOrFail($id);
+
+        $validated = $request->validate([
+            'closing_date' => ['required', 'date'],
+            'closing_time' => ['required', 'string', 'max:10'],
+        ]);
+
+        $session->update([
+            'closing_date' => $validated['closing_date'],
+            'closing_time' => $validated['closing_time'] ?: '23:59',
+        ]);
+
+        AuditLog::log('session_deadline_updated', 'AdmissionSession', $session->id, null, [
+            'closing_date' => $validated['closing_date'],
+            'closing_time' => $validated['closing_time'],
+        ]);
+
+        return back()->with('success', "Application submission deadline for '{$session->name}' set to " . $session->closing_datetime->format('d M, Y \a\t h:i A') . ".");
     }
 
     public function destroy(int $id)

@@ -99,4 +99,127 @@ class AdmissionSessionManagementTest extends TestCase
             'deleted_at' => null,
         ]);
     }
+
+    public function test_admin_can_toggle_admission_session_open_and_closed(): void
+    {
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@bcmt.edu.pk'],
+            ['name' => 'Admin', 'password' => bcrypt('password')]
+        );
+        $admin->assignRole('super_admin');
+
+        $session = AdmissionSession::create([
+            'name' => 'Toggle Test Session',
+            'code' => 'TOGGLE-' . rand(100, 999),
+            'start_date' => now()->subDays(2)->toDateString(),
+            'closing_date' => now()->addDays(10)->toDateString(),
+            'closing_time' => '23:59',
+            'status' => 'open',
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($session->isOpen());
+
+        // 1. Toggle to Close
+        $res = $this->actingAs($admin)->post("/admin/sessions/{$session->id}/toggle-status");
+        $res->assertSessionHasNoErrors();
+        $session->refresh();
+        $this->assertEquals('closed', $session->status);
+        $this->assertFalse($session->isOpen());
+
+        // 2. Toggle to Open
+        $res2 = $this->actingAs($admin)->post("/admin/sessions/{$session->id}/toggle-status");
+        $res2->assertSessionHasNoErrors();
+        $session->refresh();
+        $this->assertEquals('open', $session->status);
+        $this->assertTrue($session->isOpen());
+    }
+
+    public function test_admin_can_set_exact_deadline_date_and_time(): void
+    {
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@bcmt.edu.pk'],
+            ['name' => 'Admin', 'password' => bcrypt('password')]
+        );
+        $admin->assignRole('super_admin');
+
+        $session = AdmissionSession::create([
+            'name' => 'Deadline Test Session',
+            'code' => 'DEADLINE-' . rand(100, 999),
+            'start_date' => now()->subDays(2)->toDateString(),
+            'closing_date' => now()->addDays(5)->toDateString(),
+            'closing_time' => '17:00',
+            'status' => 'open',
+            'is_active' => true,
+        ]);
+
+        $newDate = now()->addDays(14)->toDateString();
+        $newTime = '18:30';
+
+        $res = $this->actingAs($admin)->post("/admin/sessions/{$session->id}/deadline", [
+            'closing_date' => $newDate,
+            'closing_time' => $newTime,
+        ]);
+
+        $res->assertSessionHasNoErrors();
+        $session->refresh();
+        $this->assertEquals($newDate, $session->closing_date->format('Y-m-d'));
+        $this->assertEquals($newTime, $session->closing_time);
+    }
+
+    public function test_candidate_cannot_apply_when_deadline_date_and_time_has_expired(): void
+    {
+        // Deactivate other active sessions
+        AdmissionSession::where('is_active', true)->update(['is_active' => false]);
+
+        // Create an expired session (closing was 2 hours ago today)
+        $expiredSession = AdmissionSession::create([
+            'name' => 'Expired Session',
+            'code' => 'EXP-' . rand(100, 999),
+            'start_date' => now()->subDays(5)->toDateString(),
+            'closing_date' => now()->subDay()->toDateString(),
+            'closing_time' => '12:00',
+            'status' => 'open',
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($expiredSession->isExpired());
+        $this->assertFalse($expiredSession->isOpen());
+
+        // Candidate visits /apply -> gets redirected or shown Closed view
+        $response = $this->get('/apply');
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Public/Apply/Closed'));
+
+        // Candidate attempts POST /apply -> validation error
+        $postResponse = $this->post('/apply', [
+            'full_name' => 'Test Student',
+            'email' => 'test@student.com',
+        ]);
+        $postResponse->assertSessionHasErrors(['session']);
+    }
+
+    public function test_candidate_cannot_apply_when_admissions_are_manually_closed(): void
+    {
+        // Deactivate other active sessions
+        AdmissionSession::where('is_active', true)->update(['is_active' => false]);
+
+        // Create a manually closed session (future deadline, but admin closed it)
+        $closedSession = AdmissionSession::create([
+            'name' => 'Manually Closed Session',
+            'code' => 'CLOSED-' . rand(100, 999),
+            'start_date' => now()->subDays(2)->toDateString(),
+            'closing_date' => now()->addDays(20)->toDateString(),
+            'closing_time' => '23:59',
+            'status' => 'closed',
+            'is_active' => true,
+        ]);
+
+        $this->assertFalse($closedSession->isOpen());
+
+        // Visiting /apply shows Closed view
+        $response = $this->get('/apply');
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Public/Apply/Closed'));
+    }
 }

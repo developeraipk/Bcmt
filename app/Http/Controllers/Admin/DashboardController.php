@@ -68,8 +68,23 @@ class DashboardController extends Controller
         $maleCount = (clone $appQuery)->whereHas('applicantProfile', fn ($q) => $q->where('gender', 'male'))->count();
         $femaleCount = (clone $appQuery)->whereHas('applicantProfile', fn ($q) => $q->where('gender', 'female'))->count();
 
+        $activeSessionData = null;
+        if ($activeSession) {
+            $activeSessionData = [
+                'id' => $activeSession->id,
+                'name' => $activeSession->name,
+                'code' => $activeSession->code,
+                'status' => $activeSession->status,
+                'is_open' => $activeSession->isOpen(),
+                'is_expired' => $activeSession->isExpired(),
+                'closing_datetime_formatted' => $activeSession->closing_datetime->format('d M, Y \a\t h:i A'),
+                'time_remaining' => $activeSession->time_remaining,
+            ];
+        }
+
         return Inertia::render('Admin/Dashboard', [
             'sessions' => $sessions,
+            'activeSession' => $activeSessionData,
             'selectedSessionId' => (int) $sessionId,
             'stats' => [
                 'total_applications' => $totalApplications,

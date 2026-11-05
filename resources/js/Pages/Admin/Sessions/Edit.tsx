@@ -51,6 +51,7 @@ export default function SessionsEdit({ session, programs = [] }: Props) {
     status: session.status || 'open',
     start_date: session.start_date ? String(session.start_date).split('T')[0] : '',
     closing_date: session.closing_date ? String(session.closing_date).split('T')[0] : '',
+    closing_time: session.closing_time ? String(session.closing_time).substring(0, 5) : '23:59',
     is_active: Boolean(session.is_active),
     admission_instructions: session.admission_instructions || '',
     program_seats: initialSeats,
@@ -181,6 +182,58 @@ export default function SessionsEdit({ session, programs = [] }: Props) {
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-none"
                 />
                 {errors.closing_date && <p className="text-rose-600 text-xs mt-1">{errors.closing_date}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Deadline End Time (Closing Clock)
+                </label>
+                <input
+                  type="time"
+                  required
+                  value={data.closing_time}
+                  onChange={(e) => setData('closing_time', e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-[#07294D] focus:outline-none font-mono font-bold"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setData('closing_time', '23:59')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
+                      data.closing_time === '23:59'
+                        ? 'bg-[#07294D] text-[#FFB606] border-[#07294D]'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    11:59 PM (Midnight End)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setData('closing_time', '17:00')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
+                      data.closing_time === '17:00'
+                        ? 'bg-[#07294D] text-[#FFB606] border-[#07294D]'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    05:00 PM (Office Close)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setData('closing_time', '12:00')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
+                      data.closing_time === '12:00'
+                        ? 'bg-[#07294D] text-[#FFB606] border-[#07294D]'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    12:00 PM (Noon)
+                  </button>
+                </div>
+                {errors.closing_time && <p className="text-rose-600 text-xs mt-1">{errors.closing_time}</p>}
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Once this exact date and time passes, candidate registration will immediately and automatically stop.
+                </p>
               </div>
             </div>
 

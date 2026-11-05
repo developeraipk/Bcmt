@@ -53,8 +53,18 @@ class AdmissionController extends Controller
             'admission_closed_notice' => SystemSetting::get('admission_closed_notice'),
         ];
 
+        $activeSessionData = null;
+        if ($activeSession) {
+            $activeSessionData = array_merge($activeSession->toArray(), [
+                'is_open' => $activeSession->isOpen(),
+                'is_expired' => $activeSession->isExpired(),
+                'closing_datetime_formatted' => $activeSession->closing_datetime->format('d M, Y \a\t h:i A'),
+                'time_remaining' => $activeSession->time_remaining,
+            ]);
+        }
+
         return Inertia::render('Public/Home', [
-            'activeSession' => $activeSession,
+            'activeSession' => $activeSessionData,
             'programs' => $programs,
             'settings' => $settings,
         ]);
@@ -120,8 +130,21 @@ class AdmissionController extends Controller
     {
         $activeSession = AdmissionSession::getActive();
         if (!$activeSession || !$activeSession->isOpen()) {
+            $reason = 'The online application portal is currently closed for new submissions.';
+            if ($activeSession && $activeSession->isExpired()) {
+                $reason = "The official application submission deadline for {$activeSession->name} ended on {$activeSession->closing_datetime->format('d M, Y \a\t h:i A')}. Candidate registrations are no longer accepted.";
+            } elseif ($activeSession && $activeSession->status !== 'open') {
+                $reason = "Admissions for {$activeSession->name} have been closed by the college administration.";
+            }
+
             return Inertia::render('Public/Apply/Closed', [
-                'notice' => SystemSetting::get('admission_closed_notice', 'Admissions are currently closed.'),
+                'notice' => $reason,
+                'activeSession' => $activeSession ? [
+                    'name' => $activeSession->name,
+                    'code' => $activeSession->code,
+                    'is_expired' => $activeSession->isExpired(),
+                    'closing_datetime_formatted' => $activeSession->closing_datetime->format('d M, Y \a\t h:i A'),
+                ] : null,
             ]);
         }
 
@@ -152,7 +175,10 @@ class AdmissionController extends Controller
     {
         $activeSession = AdmissionSession::getActive();
         if (!$activeSession || !$activeSession->isOpen()) {
-            throw ValidationException::withMessages(['session' => 'Admissions are closed for this session.']);
+            $deadlineInfo = $activeSession ? ' (Deadline: ' . $activeSession->closing_datetime->format('d M, Y \a\t h:i A') . ')' : '';
+            throw ValidationException::withMessages([
+                'session' => 'Admissions are closed for this session' . $deadlineInfo . '. Online applications cannot be submitted after the deadline.'
+            ]);
         }
 
         // Validate 5-Step Admission Data

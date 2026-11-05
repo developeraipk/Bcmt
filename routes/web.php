@@ -101,6 +101,8 @@ Route::middleware(['auth', 'role:super_admin,management,admission_officer,docume
     Route::post('/sessions', [AdminSessionController::class, 'store'])->name('sessions.store');
     Route::get('/sessions/{id}/edit', [AdminSessionController::class, 'edit'])->name('sessions.edit');
     Route::put('/sessions/{id}', [AdminSessionController::class, 'update'])->name('sessions.update');
+    Route::post('/sessions/{id}/toggle-status', [AdminSessionController::class, 'toggleStatus'])->name('sessions.toggle-status');
+    Route::post('/sessions/{id}/deadline', [AdminSessionController::class, 'setDeadline'])->name('sessions.deadline');
     Route::delete('/sessions/{id}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
 
     // Applications & Verification

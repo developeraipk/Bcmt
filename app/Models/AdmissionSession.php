@@ -15,6 +15,7 @@ class AdmissionSession extends Model
         'code',
         'start_date',
         'closing_date',
+        'closing_time',
         'status',
         'is_active',
         'admission_instructions',
@@ -51,9 +52,58 @@ class AdmissionSession extends Model
         return $this->hasMany(MeritList::class);
     }
 
+    public function getClosingDatetimeAttribute(): \Carbon\Carbon
+    {
+        $dateStr = $this->closing_date ? $this->closing_date->format('Y-m-d') : now()->toDateString();
+        $timeStr = trim((string) ($this->closing_time ?: '23:59'));
+        if (strlen($timeStr) === 5) {
+            $timeStr .= ':59';
+        }
+        return \Carbon\Carbon::parse($dateStr . ' ' . $timeStr);
+    }
+
+    public function isExpired(): bool
+    {
+        return now()->gt($this->closing_datetime);
+    }
+
+    public function getTimeRemainingAttribute(): string
+    {
+        $now = now();
+        $closing = $this->closing_datetime;
+
+        if ($now->gt($closing)) {
+            return 'Deadline expired';
+        }
+
+        $diffDays = $now->diffInDays($closing);
+        $diffHours = $now->diffInHours($closing);
+        $diffMinutes = $now->diffInMinutes($closing);
+
+        if ($diffDays > 1) {
+            return "{$diffDays} days remaining";
+        } elseif ($diffDays === 1) {
+            return "1 day remaining";
+        } elseif ($diffHours > 1) {
+            return "{$diffHours} hours remaining";
+        } elseif ($diffMinutes > 0) {
+            return "{$diffMinutes} minutes remaining";
+        }
+
+        return 'Closing shortly';
+    }
+
     public function isOpen(): bool
     {
-        return $this->status === 'open' && $this->is_active && now()->between($this->start_date, $this->closing_date->endOfDay());
+        if ($this->status !== 'open' || !$this->is_active) {
+            return false;
+        }
+
+        $now = now();
+        $start = \Carbon\Carbon::parse($this->start_date->format('Y-m-d') . ' 00:00:00');
+        $closing = $this->closing_datetime;
+
+        return $now->gte($start) && $now->lte($closing);
     }
 
     public static function getActive(): ?self

@@ -1,6 +1,6 @@
 import React from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
   Users,
   FileCheck,
@@ -13,11 +13,17 @@ import {
   ArrowUpRight,
   TrendingUp,
   Filter,
-  BarChart3
+  BarChart3,
+  Lock,
+  Unlock,
+  AlertTriangle,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 
 interface Props {
   sessions: any[];
+  activeSession?: any;
   selectedSessionId: number;
   stats: {
     total_applications: number;
@@ -48,7 +54,7 @@ interface Props {
   };
 }
 
-export default function AdminDashboard({ sessions, selectedSessionId, stats, programAnalytics, genderStats }: Props) {
+export default function AdminDashboard({ sessions, activeSession, selectedSessionId, stats, programAnalytics, genderStats }: Props) {
   const totalGender = (genderStats?.male || 0) + (genderStats?.female || 0);
   const malePercent = totalGender > 0 ? Math.round((genderStats.male / totalGender) * 100) : 0;
   const femalePercent = totalGender > 0 ? Math.round((genderStats.female / totalGender) * 100) : 0;
@@ -92,6 +98,48 @@ export default function AdminDashboard({ sessions, selectedSessionId, stats, pro
           </select>
         </div>
       </div>
+
+      {/* Live Admission Portal Gateway Status Banner */}
+      {activeSession && (
+        <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+              activeSession.is_open
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-rose-50 text-rose-700 border border-rose-200'
+            }`}>
+              {activeSession.is_open ? <Unlock className="w-5 h-5 text-emerald-600" /> : <Lock className="w-5 h-5 text-rose-600" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-900">
+                  Admissions Status:
+                </span>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
+                  activeSession.is_open
+                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                    : 'bg-rose-100 text-rose-900 border border-rose-300'
+                }`}>
+                  {activeSession.is_open ? 'ONLINE & OPEN' : 'CLOSED / SUSPENDED'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeSession.name} ({activeSession.code}) • Deadline:{' '}
+                <strong className="text-slate-800 font-mono">{activeSession.closing_datetime_formatted}</strong>{' '}
+                <span className="text-slate-400">({activeSession.time_remaining})</span>
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/admin/sessions"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
+          >
+            <span>Manage Portal &amp; Deadlines</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#FFB606]" />
+          </Link>
+        </div>
+      )}
 
       {/* Primary KPI Grid (4 Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

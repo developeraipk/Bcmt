@@ -53,7 +53,7 @@ interface Props {
 }
 
 export default function Home({ activeSession, programs, settings }: Props) {
-    const isAdmissionOpen = settings.admission_open_status && activeSession?.is_active;
+    const isAdmissionOpen = Boolean(settings.admission_open_status && (activeSession?.is_open ?? activeSession?.is_active));
 
     const bsPrograms = programs.filter((p) => p.category === 'bs_degree');
     const pharmacyB = programs.filter((p) => p.category === 'pharmacy_b');
@@ -142,6 +142,24 @@ export default function Home({ activeSession, programs, settings }: Props) {
                                     <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
                                 </Link>
                             </div>
+
+                            {/* Live Application Window Status Banner */}
+                            {isAdmissionOpen && activeSession?.closing_datetime_formatted && (
+                                <div className="flex items-center gap-2 text-xs text-[#FFB606] font-semibold bg-[#FFB606]/10 px-3.5 py-1.5 rounded-xl border border-[#FFB606]/25 w-fit">
+                                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Application Deadline: <strong className="text-white font-bold">{activeSession.closing_datetime_formatted}</strong> ({activeSession.time_remaining})</span>
+                                </div>
+                            )}
+                            {!isAdmissionOpen && (
+                                <div className="flex items-center gap-2 text-xs text-amber-200 font-semibold bg-amber-500/15 px-3.5 py-1.5 rounded-xl border border-amber-400/25 w-fit">
+                                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                                    <span>
+                                        {activeSession?.is_expired
+                                            ? `Admissions Closed: Deadline expired on ${activeSession.closing_datetime_formatted}`
+                                            : 'Admissions are currently suspended for this cycle.'}
+                                    </span>
+                                </div>
+                            )}
 
                             {/* Trust Indicator Checkpoints */}
                             <div className="pt-4 border-t border-white/15 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-200">
