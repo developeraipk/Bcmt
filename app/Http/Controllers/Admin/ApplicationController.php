@@ -143,6 +143,31 @@ class ApplicationController extends Controller
         return back()->with('success', "{$doc->getDocumentName()} verification status updated to {$request->input('status')}.");
     }
 
+    public function approveAllDocuments(Request $request, int $id)
+    {
+        $application = Application::with('documents')->findOrFail($id);
+        $user = $request->user();
+
+        $count = 0;
+        foreach ($application->documents as $doc) {
+            $doc->update([
+                'verification_status' => 'approved',
+                'rejection_reason' => null,
+                'verified_by_user_id' => $user->id,
+                'verified_at' => now(),
+            ]);
+            $count++;
+        }
+
+        $application->touch();
+
+        AuditLog::log('all_documents_approved', 'Application', $application->id, null, [
+            'approved_count' => $count,
+        ]);
+
+        return back()->with('success', "All {$count} uploaded candidate document(s) have been verified and approved successfully.");
+    }
+
     public function updateVerificationStatus(Request $request, int $id)
     {
         $request->validate([

@@ -116,6 +116,7 @@ Route::middleware(['auth', 'role:super_admin,management,admission_officer,docume
     Route::delete('/applications/{id}', [AdminApplicationController::class, 'destroy'])->name('applications.destroy');
     Route::get('/applications/{id}/print', [AdminApplicationController::class, 'printSummary'])->name('applications.print');
     Route::post('/applications/{id}/verify', [AdminApplicationController::class, 'updateVerificationStatus'])->name('applications.verify');
+    Route::post('/applications/{id}/approve-all-documents', [AdminApplicationController::class, 'approveAllDocuments'])->name('applications.approve-all-documents');
     Route::post('/documents/{id}/verify', [AdminApplicationController::class, 'verifyDocument'])->name('documents.verify');
 
     // Roll Number & Examination Seating Management
@@ -205,4 +206,6 @@ Route::middleware(['auth', 'role:super_admin,management,hod,exam_manager'])->pre
 Route::middleware(['auth', 'role:super_admin,management,hod,invigilator'])->prefix('invigilator')->name('invigilator.')->group(function () {
     Route::get('/dashboard', [InvigilatorAttendanceController::class, 'index'])->name('dashboard');
     Route::post('/attendance/mark', [InvigilatorAttendanceController::class, 'markAttendance'])->name('attendance.mark');
+    Route::post('/attendance/quick-mark', [InvigilatorAttendanceController::class, 'quickMark'])->name('attendance.quick-mark');
+    Route::post('/attendance/mark-all-present', [InvigilatorAttendanceController::class, 'markAllPresent'])->name('attendance.mark-all-present');
 });

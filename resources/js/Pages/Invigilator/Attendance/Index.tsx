@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import InvigilatorLayout from '@/Layouts/InvigilatorLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import {
@@ -11,7 +11,8 @@ import {
   Search,
   Building,
   ShieldCheck,
-  Users
+  Users,
+  CheckCheck
 } from 'lucide-react';
 
 interface Candidate {
@@ -37,6 +38,11 @@ interface Props {
 export default function AttendanceIndex({ activeExams, selectedExam, candidates }: Props) {
   const [search, setSearch] = useState('');
   const [activeCandidate, setActiveCandidate] = useState<Candidate | null>(null);
+  const [candidateList, setCandidateList] = useState<Candidate[]>(candidates || []);
+
+  useEffect(() => {
+    setCandidateList(candidates || []);
+  }, [candidates]);
 
   // Form for marking physical candidate attendance
   const markForm = useForm({
@@ -48,16 +54,16 @@ export default function AttendanceIndex({ activeExams, selectedExam, candidates 
     remarks: '',
   });
 
-  const filteredCandidates = candidates.filter(
+  const filteredCandidates = candidateList.filter(
     (c) =>
       c.student_name.toLowerCase().includes(search.toLowerCase()) ||
       c.roll_number?.toLowerCase().includes(search.toLowerCase()) ||
       c.cnic?.includes(search)
   );
 
-  const presentCount = candidates.filter((c) => c.attendance_status === 'present').length;
-  const absentCount = candidates.filter((c) => c.attendance_status === 'absent').length;
-  const unmarkedCount = candidates.filter((c) => c.attendance_status === 'unmarked').length;
+  const presentCount = candidateList.filter((c) => c.attendance_status === 'present').length;
+  const absentCount = candidateList.filter((c) => c.attendance_status === 'absent').length;
+  const unmarkedCount = candidateList.filter((c) => c.attendance_status === 'unmarked').length;
 
   const handleExamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     router.get('/invigilator/dashboard', { examination_id: e.target.value }, { preserveState: true });
@@ -77,10 +83,64 @@ export default function AttendanceIndex({ activeExams, selectedExam, candidates 
 
   const handleSaveAttendance = (e: React.FormEvent) => {
     e.preventDefault();
+    const cId = Number(markForm.data.application_id);
+    const status = markForm.data.status;
+
+    // Optimistic instantaneous UI update
+    setCandidateList(prev => prev.map(c => c.id === cId ? {
+      ...c,
+      attendance_status: status,
+      room_number: markForm.data.room_number,
+      seat_number: markForm.data.seat_number,
+      verified_at: 'Just now'
+    } : c));
+    setActiveCandidate(null);
+
     markForm.post('/invigilator/attendance/mark', {
-      onSuccess: () => {
-        setActiveCandidate(null);
-      },
+      preserveScroll: true,
+      preserveState: true,
+    });
+  };
+
+  const handleMarkAllPresent = () => {
+    if (!selectedExam) return;
+    const progTitle = selectedExam.session_program?.program?.name || selectedExam.title;
+    if (!confirm(`Are you sure you want to mark ALL candidates present for ${progTitle}?`)) {
+      return;
+    }
+
+    // Optimistic instantaneous UI update for entire room
+    setCandidateList(prev => prev.map(c => ({
+      ...c,
+      attendance_status: 'present',
+      verified_at: 'Just now'
+    })));
+
+    router.post('/invigilator/attendance/mark-all-present', {
+      examination_id: selectedExam.id
+    }, {
+      preserveScroll: true,
+      preserveState: true,
+    });
+  };
+
+  const handleQuickMark = (candidateId: number, status: 'present' | 'absent') => {
+    if (!selectedExam) return;
+
+    // Optimistic instantaneous UI update for clicked candidate
+    setCandidateList(prev => prev.map(c => c.id === candidateId ? {
+      ...c,
+      attendance_status: status,
+      verified_at: 'Just now'
+    } : c));
+
+    router.post('/invigilator/attendance/quick-mark', {
+      examination_id: selectedExam.id,
+      application_id: candidateId,
+      status: status
+    }, {
+      preserveScroll: true,
+      preserveState: true,
     });
   };
 
@@ -172,16 +232,28 @@ export default function AttendanceIndex({ activeExams, selectedExam, candidates 
             </div>
           </div>
 
-          {/* Candidate Search */}
-          <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs mb-6 flex items-center gap-3">
-            <Search className="w-4 h-4 text-stone-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Filter by Candidate Name, Roll Number, or CNIC..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-transparent border-0 text-xs focus:ring-0 text-stone-800 placeholder-stone-400"
-            />
+          {/* Candidate Search and Bulk Room Actions */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+            <div className="bg-white p-3.5 px-4 rounded-2xl border border-stone-200 shadow-xs flex items-center gap-3 flex-1">
+              <Search className="w-4 h-4 text-stone-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Filter by Candidate Name, Roll Number, or CNIC..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-transparent border-0 text-xs focus:ring-0 text-stone-800 placeholder-stone-400"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleMarkAllPresent}
+              disabled={candidates.length === 0 || (unmarkedCount === 0 && absentCount === 0)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-emerald-700 hover:bg-emerald-800 disabled:bg-stone-200 text-white disabled:text-stone-400 rounded-2xl text-xs font-bold transition shadow-xs cursor-pointer disabled:cursor-not-allowed shrink-0"
+            >
+              <CheckCheck className="w-4 h-4 text-emerald-200" />
+              <span>Mark All Present in this Room ({candidates.length})</span>
+            </button>
           </div>
 
           {/* Attendance Roster Table */}
@@ -196,13 +268,13 @@ export default function AttendanceIndex({ activeExams, selectedExam, candidates 
                     <th className="p-4 text-center">Gender</th>
                     <th className="p-4 text-center">Hall & Desk</th>
                     <th className="p-4 text-center">Physical Attendance</th>
-                    <th className="p-4 text-right">Verification Action</th>
+                    <th className="p-4 text-right">Quick Verification Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 text-stone-800">
                   {filteredCandidates.map((c) => (
                     <tr key={c.id} className="hover:bg-stone-50/50 transition">
-                      <td className="p-4 font-mono font-black text-base text-[#800000]">
+                      <td className="p-4 font-mono font-black text-base text-[#07294D]">
                         {c.roll_number}
                       </td>
                       <td className="p-4">
@@ -238,12 +310,42 @@ export default function AttendanceIndex({ activeExams, selectedExam, candidates 
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <button
-                          onClick={() => handleOpenMarkModal(c)}
-                          className="px-3 py-1.5 bg-[#800000] hover:bg-[#660000] text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
-                        >
-                          Mark / Edit
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleQuickMark(c.id, 'present')}
+                            title="Instant Mark Present"
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                              c.attendance_status === 'present'
+                                ? 'bg-emerald-700 text-white shadow-xs'
+                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            }`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Present</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickMark(c.id, 'absent')}
+                            title="Instant Mark Absent"
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                              c.attendance_status === 'absent'
+                                ? 'bg-rose-700 text-white shadow-xs'
+                                : 'bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200'
+                            }`}
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Absent</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenMarkModal(c)}
+                            title="Detailed Desk & Remarks"
+                            className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-bold transition cursor-pointer"
+                          >
+                            Details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -273,7 +375,7 @@ export default function AttendanceIndex({ activeExams, selectedExam, candidates 
               Mark Room Attendance: {activeCandidate.student_name}
             </h3>
             <p className="text-xs text-stone-500 mb-4">
-              Roll No: <strong className="font-mono text-[#800000]">{activeCandidate.roll_number}</strong> • CNIC: {activeCandidate.cnic}
+              Roll No: <strong className="font-mono text-[#07294D]">{activeCandidate.roll_number}</strong> • CNIC: {activeCandidate.cnic}
             </p>
 
             <form onSubmit={handleSaveAttendance} className="space-y-4">
@@ -344,7 +446,7 @@ export default function AttendanceIndex({ activeExams, selectedExam, candidates 
                 <button
                   type="submit"
                   disabled={markForm.processing}
-                  className="flex-1 py-2 bg-[#800000] hover:bg-[#660000] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
+                  className="flex-1 py-2 bg-[#07294D] hover:bg-[#0c3966] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   Confirm Attendance
                 </button>

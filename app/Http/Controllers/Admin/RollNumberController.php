@@ -126,7 +126,7 @@ class RollNumberController extends Controller
             foreach ($grouped as $spId => $apps) {
                 $sp = SessionProgram::find($spId);
                 $shiftLabel = ucfirst($validated['test_shift']);
-                $examTitle = "Entrance Examination - " . ($sp?->program?->name ?? 'Cohort') . " ({$shiftLabel} Shift)";
+                $examTitle = ($sp?->program?->name ?? 'Cohort') . " Entrance Test ({$shiftLabel} Shift)";
 
                 $timeStr = $validated['test_time'] ? trim($validated['test_time']) : '09:00 AM';
                 $startDateTime = Carbon::parse($validated['test_date'] . ' ' . $timeStr);

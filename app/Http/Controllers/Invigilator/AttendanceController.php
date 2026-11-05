@@ -94,6 +94,102 @@ class AttendanceController extends Controller
             'seat' => $request->input('seat_number'),
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $request->input('status'),
+                'verified_at' => $attendance->verified_at?->format('h:i A'),
+                'room_number' => $attendance->room_number,
+                'seat_number' => $attendance->seat_number,
+            ]);
+        }
+
         return back()->with('success', "Attendance marked as {$request->input('status')} for candidate.");
+    }
+
+    public function quickMark(Request $request)
+    {
+        $request->validate([
+            'examination_id' => ['required', 'exists:examinations,id'],
+            'application_id' => ['required', 'exists:applications,id'],
+            'status' => ['required', 'in:present,absent,unmarked,disqualified'],
+        ]);
+
+        $user = $request->user();
+        $status = $request->input('status');
+
+        $attendance = ExaminationAttendance::updateOrCreate(
+            [
+                'examination_id' => $request->input('examination_id'),
+                'application_id' => $request->input('application_id'),
+            ],
+            [
+                'invigilator_user_id' => $user->id,
+                'room_number' => $request->input('room_number', 'Examination Hall A'),
+                'attendance_status' => $status,
+                'verified_at' => in_array($status, ['present', 'absent', 'disqualified']) ? now() : null,
+            ]
+        );
+
+        AuditLog::log('attendance_quick_marked', 'ExaminationAttendance', $attendance->id, null, [
+            'status' => $status,
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $status,
+                'verified_at' => $attendance->verified_at?->format('h:i A'),
+            ]);
+        }
+
+        return back()->with('success', "Attendance updated to {$status}.");
+    }
+
+    public function markAllPresent(Request $request)
+    {
+        $request->validate([
+            'examination_id' => ['required', 'exists:examinations,id'],
+        ]);
+
+        $exam = Examination::with('sessionProgram.program')->findOrFail($request->input('examination_id'));
+        $user = $request->user();
+
+        $applications = Application::where('session_program_id', $exam->session_program_id)
+            ->where('admission_session_id', $exam->admission_session_id)
+            ->where('exam_eligibility_status', 'eligible')
+            ->get();
+
+        $count = 0;
+        foreach ($applications as $app) {
+            ExaminationAttendance::updateOrCreate(
+                [
+                    'examination_id' => $exam->id,
+                    'application_id' => $app->id,
+                ],
+                [
+                    'invigilator_user_id' => $user->id,
+                    'room_number' => 'Main Examination Hall',
+                    'attendance_status' => 'present',
+                    'verified_at' => now(),
+                ]
+            );
+            $count++;
+        }
+
+        AuditLog::log('all_candidates_marked_present', 'Examination', $exam->id, null, [
+            'marked_count' => $count,
+            'program' => $exam->sessionProgram?->program?->name,
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'marked_count' => $count,
+                'message' => "All {$count} candidates for {$exam->sessionProgram?->program?->name} marked present.",
+            ]);
+        }
+
+        return back()->with('success', "All {$count} candidates for {$exam->sessionProgram?->program?->name} marked present successfully.");
     }
 }

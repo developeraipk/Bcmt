@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -14,7 +14,8 @@ import {
   History,
   Send,
   ExternalLink,
-  Lock
+  Lock,
+  CheckCheck,
 } from 'lucide-react';
 
 interface Props {
@@ -72,6 +73,14 @@ export default function ApplicationShow({ application }: Props) {
         console.error('Doc verification error:', err);
       },
     });
+  };
+
+  const handleApproveAllDocs = () => {
+    if (confirm(`Are you sure you want to approve and verify all ${documents.length} uploaded documents for this candidate?`)) {
+      router.post(`/admin/applications/${application.id}/approve-all-documents`, {}, {
+        preserveScroll: true,
+      });
+    }
   };
 
   return (
@@ -276,9 +285,21 @@ export default function ApplicationShow({ application }: Props) {
 
             {/* Document Scrutiny Table */}
             <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs">
-              <h3 className="text-sm font-bold text-stone-900 mb-4 pb-3 border-b border-stone-100 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#07294D]" /> Uploaded Verification Documents
-              </h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-stone-100">
+                <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#07294D]" /> Uploaded Verification Documents
+                </h3>
+
+                <button
+                  type="button"
+                  onClick={handleApproveAllDocs}
+                  disabled={documents.length === 0 || documents.every((d: any) => d.verification_status === 'approved')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 disabled:bg-stone-200 text-white disabled:text-stone-400 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <CheckCheck className="w-4 h-4 text-emerald-200" />
+                  <span>Approve All Documents ({documents.length})</span>
+                </button>
+              </div>
               <div className="space-y-3">
                 {documents.map((doc: any) => (
                   <div

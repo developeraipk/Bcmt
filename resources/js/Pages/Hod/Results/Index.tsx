@@ -501,11 +501,16 @@ export default function ResultsIndex({
 
                     {/* Program & Examination */}
                     <td className="p-4 font-sans">
-                      <div className="font-bold text-slate-900">
+                      <div className="font-bold text-slate-900 text-xs sm:text-sm">
                         {res.examination?.session_program?.program?.name || 'Academic Program'}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {res.examination?.title} ({res.examination?.exam_code}) • Shift: {res.examination?.shift || 'Morning'}
+                      <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                        <span className="font-mono text-[10px] font-bold text-[#07294D] bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                          {res.examination?.exam_code || 'TEST'}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 capitalize">
+                          {res.examination?.shift ? `${res.examination.shift} Shift` : 'Morning Shift'}
+                        </span>
                       </div>
                     </td>
 
