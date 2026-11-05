@@ -15,6 +15,16 @@ class AdmissionApplicationTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        AdmissionSession::where('is_active', true)->update([
+            'closing_date' => now()->addDays(30)->toDateString(),
+            'closing_time' => '23:59',
+            'status' => 'open',
+        ]);
+    }
+
     public function test_candidate_can_submit_admission_application()
     {
         Storage::fake('private');

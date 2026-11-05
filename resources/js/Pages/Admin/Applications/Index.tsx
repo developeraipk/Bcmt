@@ -25,7 +25,9 @@ import {
   BookOpen,
   Award,
   KeyRound,
-  EyeOff
+  EyeOff,
+  GraduationCap,
+  CheckCheck
 } from 'lucide-react';
 
 interface Props {
@@ -248,6 +250,17 @@ export default function ApplicationsIndex({
     });
   };
 
+  const handleBulkApproveAndEligible = () => {
+    if (confirm(`Are you sure you want to approve all uploaded documents and mark all candidate applications eligible for examination & roll numbers?`)) {
+      router.post('/admin/applications/bulk-approve-and-eligible', {
+        session_id: selectedSession,
+        program_id: selectedProgram,
+      }, {
+        preserveScroll: true,
+      });
+    }
+  };
+
   return (
     <AdminLayout>
       <Head title="Candidate Applications & Scrutiny - BCMT Admin & HOD" />
@@ -267,6 +280,15 @@ export default function ApplicationsIndex({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleBulkApproveAndEligible}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+          >
+            <CheckCheck className="w-4 h-4 text-emerald-200" />
+            <span>Approve All Docs & Make Eligible ({applications.total})</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
@@ -595,31 +617,6 @@ export default function ApplicationsIndex({
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div className="sm:col-span-3">
-                  {currentEditProgram && (
-                    <div className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-black text-xs px-2 py-0.5 bg-[#07294D] text-[#FFB606] rounded">
-                          {currentEditProgram.program?.code}
-                        </span>
-                        <span className="font-bold text-slate-800">
-                          {currentEditProgram.program?.name}
-                        </span>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border ${
-                        isEditBsProgram
-                          ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
-                          : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                      }`}>
-                        <GraduationCap className="w-3 h-3" />
-                        <span>
-                          {isEditBsProgram ? '4-Year BS Degree (Matric + Inter Required)' : '2-Year Diploma (Matric Required)'}
-                        </span>
-                      </span>
-                    </div>
-                  )}
                 </div>
                 {currentAddProgram && (
                   <div className="sm:col-span-2 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">

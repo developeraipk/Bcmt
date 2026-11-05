@@ -238,4 +238,101 @@ class BulkActionsAndInstantAttendanceTest extends TestCase
         $response->assertOk();
         $response->assertJson(['success' => true, 'status' => 'present']);
     }
+
+    public function test_admin_can_bulk_approve_all_applications_documents_and_mark_eligible()
+    {
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@bcmt.edu.pk'],
+            ['name' => 'Admin', 'password' => bcrypt('password')]
+        );
+        $admin->assignRole('super_admin');
+
+        $session = AdmissionSession::firstOrCreate(
+            ['code' => 'TEST-BULK-2026'],
+            [
+                'name' => 'Test Session 2026',
+                'start_date' => now()->subDays(5),
+                'closing_date' => now()->addDays(20),
+                'status' => 'open',
+                'is_active' => true,
+            ]
+        );
+        $sp = SessionProgram::first();
+
+        $user1 = User::factory()->create();
+        $user1->assignRole('applicant');
+        $app1 = Application::create([
+            'user_id' => $user1->id,
+            'admission_session_id' => $session->id,
+            'session_program_id' => $sp->id,
+            'application_number' => 'BCMT-BULK-001',
+            'normalized_cnic' => '1110199999901',
+            'verification_status' => 'pending',
+            'exam_eligibility_status' => 'locked',
+            'submitted_at' => now(),
+        ]);
+        $doc1 = ApplicationDocument::create([
+            'application_id' => $app1->id,
+            'document_type' => 'matric_dmc',
+            'file_path' => 'dmc/test.jpg',
+            'original_filename' => 'dmc.jpg',
+            'mime_type' => 'image/jpeg',
+            'file_size' => 1024,
+            'file_hash' => hash('sha256', 'bulk1'),
+            'verification_status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/applications/bulk-approve-and-eligible', [
+            'session_id' => $session->id,
+        ]);
+
+        $response->assertSessionHas('success');
+
+        $this->assertEquals('approved', $doc1->fresh()->verification_status);
+        $this->assertEquals('verified', $app1->fresh()->verification_status);
+        $this->assertEquals('eligible', $app1->fresh()->exam_eligibility_status);
+    }
+
+    public function test_expired_exam_attempt_redirects_without_type_error()
+    {
+        $studentUser = User::factory()->create();
+        $studentUser->assignRole('student');
+        $studentUser->load('roles');
+
+        $session = AdmissionSession::firstOrCreate(
+            ['code' => 'TEST-BULK-2026'],
+            [
+                'name' => 'Test Session 2026',
+                'start_date' => now()->subDays(5),
+                'closing_date' => now()->addDays(20),
+                'status' => 'open',
+                'is_active' => true,
+            ]
+        );
+        $sp = SessionProgram::first();
+        $exam = Examination::first();
+
+        $app = Application::create([
+            'user_id' => $studentUser->id,
+            'admission_session_id' => $session->id,
+            'session_program_id' => $sp->id,
+            'application_number' => 'BCMT-BULK-EXP-01',
+            'normalized_cnic' => '1110199999999',
+            'exam_eligibility_status' => 'eligible',
+            'submitted_at' => now(),
+        ]);
+
+        $attempt = \App\Models\ExaminationAttempt::create([
+            'examination_id' => $exam->id,
+            'application_id' => $app->id,
+            'user_id' => $studentUser->id,
+            'start_time' => now()->subHours(5),
+            'server_deadline' => now()->subHours(3), // Expired!
+            'status' => 'in_progress',
+        ]);
+
+        $response = $this->actingAs($studentUser)->get('/student/exam/active');
+        $response->assertRedirect(route('student.exam.gate'));
+        $response->assertSessionHas('warning');
+    }
 }

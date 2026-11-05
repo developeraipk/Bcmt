@@ -806,4 +806,60 @@ class ApplicationController extends Controller
 
         return back()->with('success', "Application #{$appNumber} and all its test, results, attendance, and merit data permanently deleted.");
     }
+
+    public function bulkApproveAndMakeEligible(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $programId = $request->input('program_id');
+
+        $query = Application::query();
+
+        if ($sessionId) {
+            $query->where('admission_session_id', $sessionId);
+        } else {
+            $activeSession = AdmissionSession::getActive();
+            if ($activeSession) {
+                $query->where('admission_session_id', $activeSession->id);
+            }
+        }
+
+        if ($programId) {
+            $query->whereHas('sessionProgram', fn ($q) => $q->where('program_id', $programId));
+        }
+
+        $applications = $query->with('documents')->get();
+        $count = 0;
+
+        DB::transaction(function () use ($applications, &$count, $request) {
+            foreach ($applications as $app) {
+                // 1. Approve all documents of this application
+                foreach ($app->documents as $doc) {
+                    if ($doc->verification_status !== 'approved') {
+                        $doc->update([
+                            'verification_status' => 'approved',
+                            'rejection_reason' => null,
+                            'verified_by_user_id' => $request->user()?->id,
+                            'verified_at' => now(),
+                        ]);
+                    }
+                }
+
+                // 2. Mark application verified and eligible for exam & roll number
+                $app->update([
+                    'verification_status' => 'verified',
+                    'exam_eligibility_status' => 'eligible',
+                ]);
+
+                $count++;
+            }
+        });
+
+        AuditLog::log('bulk_applications_approved_and_eligible', 'Application', null, null, [
+            'count' => $count,
+            'session_id' => $sessionId,
+            'program_id' => $programId,
+        ]);
+
+        return back()->with('success', "Successfully approved all documents and marked {$count} candidates eligible for test & roll numbers.");
+    }
 }

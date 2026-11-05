@@ -10,6 +10,7 @@ use App\Models\ExaminationAttempt;
 use App\Services\ExamGateService;
 use App\Services\ExaminationEngineService;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -75,7 +76,7 @@ class ExamController extends Controller
         return redirect()->route('student.exam.waiting', ['token' => $token]);
     }
 
-    public function waitingRoom(Request $request): Response
+    public function waitingRoom(Request $request): Response|RedirectResponse
     {
         $tokenStr = $request->query('token');
         $accessToken = ExaminationAccessToken::where('token', $tokenStr)
@@ -90,7 +91,7 @@ class ExamController extends Controller
             'accessToken' => $tokenStr,
             'examination' => $accessToken->examination,
             'student' => [
-                'name' => $accessToken->application->applicantProfile->full_name,
+                'name' => $accessToken->application->applicantProfile?->full_name ?? 'Candidate',
                 'application_number' => $accessToken->application->application_number,
                 'roll_number' => $accessToken->application->roll_number,
             ],
@@ -111,7 +112,7 @@ class ExamController extends Controller
         return redirect()->route('student.exam.active');
     }
 
-    public function activeTest(Request $request): Response
+    public function activeTest(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
         $application = Application::where('user_id', $user->id)->latest()->firstOrFail();
@@ -135,7 +136,7 @@ class ExamController extends Controller
         return Inertia::render('Student/Exam/ActiveTest', [
             'examPayload' => $payload,
             'student' => [
-                'name' => $application->applicantProfile->full_name,
+                'name' => $application->applicantProfile?->full_name ?? $user->name,
                 'roll_number' => $application->roll_number,
                 'application_number' => $application->application_number,
             ],

@@ -59,7 +59,7 @@ class AdmissionSession extends Model
         if (strlen($timeStr) === 5) {
             $timeStr .= ':59';
         }
-        return \Carbon\Carbon::parse($dateStr . ' ' . $timeStr);
+        return \Carbon\Carbon::parse($dateStr . ' ' . $timeStr, config('app.timezone', 'Asia/Karachi'));
     }
 
     public function isExpired(): bool
@@ -76,21 +76,29 @@ class AdmissionSession extends Model
             return 'Deadline expired';
         }
 
-        $diffDays = $now->diffInDays($closing);
-        $diffHours = $now->diffInHours($closing);
-        $diffMinutes = $now->diffInMinutes($closing);
+        $totalSeconds = (int) $now->diffInSeconds($closing);
 
-        if ($diffDays > 1) {
-            return "{$diffDays} days remaining";
-        } elseif ($diffDays === 1) {
-            return "1 day remaining";
-        } elseif ($diffHours > 1) {
-            return "{$diffHours} hours remaining";
-        } elseif ($diffMinutes > 0) {
-            return "{$diffMinutes} minutes remaining";
+        if ($totalSeconds <= 0) {
+            return 'Closing shortly';
         }
 
-        return 'Closing shortly';
+        $days = (int) floor($totalSeconds / 86400);
+        $hours = (int) floor(($totalSeconds % 86400) / 3600);
+        $minutes = (int) floor(($totalSeconds % 3600) / 60);
+        $seconds = (int) ($totalSeconds % 60);
+
+        if ($days > 0) {
+            return sprintf(
+                '%d %s, %02d:%02d:%02d remaining',
+                $days,
+                $days === 1 ? 'day' : 'days',
+                $hours,
+                $minutes,
+                $seconds
+            );
+        }
+
+        return sprintf('%02d:%02d:%02d remaining', $hours, $minutes, $seconds);
     }
 
     public function isOpen(): bool

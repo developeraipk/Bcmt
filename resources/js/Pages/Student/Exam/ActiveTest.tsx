@@ -283,30 +283,43 @@ export default function ActiveTest({ examPayload, student }: Props) {
             </div>
 
             {/* Bottom Navigation Buttons */}
-            <div className="pt-8 mt-8 border-t border-stone-100 flex items-center justify-between">
-              <button
-                disabled={currentIndex === 0}
-                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-40 cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" /> Previous
-              </button>
-
-              <div className="sm:hidden">
+            <div className="pt-6 mt-8 border-t border-stone-200 flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <button
-                  onClick={() => setShowConfirmModal(true)}
-                  className="px-3 py-2 bg-[#07294D] text-white text-xs font-bold rounded-xl cursor-pointer"
+                  disabled={currentIndex === 0}
+                  onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex-1 sm:flex-none"
                 >
-                  Submit
+                  <ChevronLeft className="w-4 h-4" /> Previous
                 </button>
+
+                {currentIndex < questions.length - 1 ? (
+                  <button
+                    onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
+                    className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer flex-1 sm:flex-none shadow-xs"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4 text-[#FFB606]" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowConfirmModal(true)}
+                    className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex-1 sm:flex-none shadow-xs"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                    <span>Submit Test</span>
+                  </button>
+                )}
               </div>
 
+              {/* Dedicated Mobile Finish / Submit Exam Button */}
               <button
-                disabled={currentIndex === questions.length - 1}
-                onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#07294D] hover:bg-[#041D3C] text-white rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-40 cursor-pointer"
+                type="button"
+                onClick={() => setShowConfirmModal(true)}
+                className="sm:hidden w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer border border-emerald-600 mt-1"
               >
-                Next <ChevronRight className="w-4 h-4 text-[#FFB606]" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                <span>Submit Examination ({answeredCount}/{questions.length} Answered)</span>
               </button>
             </div>
           </div>

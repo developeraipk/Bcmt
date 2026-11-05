@@ -23,7 +23,14 @@ class CheckRole
             return $next($request);
         }
 
-        if (!$user->hasRole($roles)) {
+        $allowedRoles = collect($roles)
+            ->flatMap(fn ($r) => explode(',', $r))
+            ->flatMap(fn ($r) => explode('|', $r))
+            ->filter()
+            ->values()
+            ->all();
+
+        if (!$user->hasRole($allowedRoles)) {
             abort(403, 'Unauthorized portal access for your role.');
         }
 

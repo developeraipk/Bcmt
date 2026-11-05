@@ -59,12 +59,16 @@ class ExaminationAttempt extends Model
 
     public function isExpired(): bool
     {
+        if (!$this->server_deadline) {
+            return false;
+        }
+
         return now()->greaterThan($this->server_deadline);
     }
 
     public function remainingSeconds(): int
     {
-        if ($this->status !== 'in_progress') {
+        if ($this->status !== 'in_progress' || !$this->server_deadline) {
             return 0;
         }
 

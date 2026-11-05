@@ -117,6 +117,7 @@ Route::middleware(['auth', 'role:super_admin,management,admission_officer,docume
     Route::get('/applications/{id}/print', [AdminApplicationController::class, 'printSummary'])->name('applications.print');
     Route::post('/applications/{id}/verify', [AdminApplicationController::class, 'updateVerificationStatus'])->name('applications.verify');
     Route::post('/applications/{id}/approve-all-documents', [AdminApplicationController::class, 'approveAllDocuments'])->name('applications.approve-all-documents');
+    Route::post('/applications/bulk-approve-and-eligible', [AdminApplicationController::class, 'bulkApproveAndMakeEligible'])->name('applications.bulk-approve-and-eligible');
     Route::post('/documents/{id}/verify', [AdminApplicationController::class, 'verifyDocument'])->name('documents.verify');
 
     // Roll Number & Examination Seating Management
