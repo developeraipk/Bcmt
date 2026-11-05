@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to hidden files and sensitive directories
+    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|tsconfig\.json|vite\.config\.ts|artisan) - [F,L,NC]
+
+    # Redirect everything to the public folder if not already there
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
