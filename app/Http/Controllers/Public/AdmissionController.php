@@ -101,7 +101,33 @@ class AdmissionController extends Controller
 
     public function programDetail(string $code): Response
     {
-        $program = Program::where('code', $code)->firstOrFail();
+        $normalizedCode = strtoupper(trim($code));
+        $aliasMap = [
+            'PHARMB' => 'PCB',
+            'PHARM-B' => 'PCB',
+            'CATEGORY-B' => 'PCB',
+            'CATEGORYB' => 'PCB',
+            'DIP-HEALTH' => 'HT',
+            'HEALTH' => 'HT',
+            'HEALTH-TECH' => 'HT',
+            'DIP-PATH' => 'PATH',
+            'PATHOLOGY' => 'PATH',
+            'PATH-TECH' => 'PATH',
+            'DIP-SURG' => 'SURG',
+            'SURGICAL' => 'SURG',
+            'DIP-ANES' => 'ANES',
+            'ANAESTHESIA' => 'ANES',
+            'DIP-RADIO' => 'RADIO',
+            'RADIOLOGY' => 'RADIO',
+            'DIP-PHARM' => 'PHARMA',
+        ];
+        $actualCode = $aliasMap[$normalizedCode] ?? $normalizedCode;
+
+        $program = Program::where('code', $actualCode)
+            ->orWhere('code', $normalizedCode)
+            ->orWhere('code', $code)
+            ->firstOrFail();
+
         $activeSession = AdmissionSession::getActive();
         $sessionProgram = $activeSession ? SessionProgram::where('admission_session_id', $activeSession->id)->where('program_id', $program->id)->first() : null;
 

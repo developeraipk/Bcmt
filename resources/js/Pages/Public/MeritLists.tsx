@@ -69,9 +69,9 @@ export default function PublicMeritLists({
           </p>
 
           {/* Session Selector */}
-          <div className="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-xs px-4 py-2 rounded-2xl border border-white/20">
-            <Calendar className="w-4 h-4 text-[#FFB606]" />
-            <span className="text-xs text-stone-300 font-semibold">Active Session:</span>
+          <div className="mt-6 inline-flex max-w-full items-center gap-2 bg-white/10 backdrop-blur-xs px-3.5 sm:px-4 py-2 rounded-2xl border border-white/20">
+            <Calendar className="w-4 h-4 text-[#FFB606] shrink-0" />
+            <span className="text-xs text-stone-300 font-semibold shrink-0">Active Session:</span>
             <select
               value={selectedSessionId}
               onChange={(e) => {
@@ -79,7 +79,7 @@ export default function PublicMeritLists({
                   session_id: e.target.value,
                 });
               }}
-              className="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer"
+              className="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer truncate max-w-[180px] sm:max-w-none"
             >
               {sessions.map((s) => (
                 <option key={s.id} value={s.id} className="text-stone-900">
@@ -93,24 +93,24 @@ export default function PublicMeritLists({
 
       {/* Search & Filter Bar */}
       <div className="max-w-6xl mx-auto px-4 -mt-6">
-        <div className="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-96">
+        <div className="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+          <div className="relative w-full sm:flex-1">
             <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by Candidate Name, Roll #, or Program..."
-              className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#07294D]"
+              className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#07294D]"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-            <span className="text-xs font-semibold text-stone-500 whitespace-nowrap">Program:</span>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <span className="text-xs font-bold text-stone-600 whitespace-nowrap shrink-0">Program:</span>
             <select
               value={selectedProgramCode}
               onChange={(e) => setSelectedProgramCode(e.target.value)}
-              className="px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none cursor-pointer"
+              className="w-full sm:w-auto flex-1 sm:flex-initial px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#07294D] cursor-pointer"
             >
               <option value="ALL">All Programs</option>
               <option value="PCB">Pharmacy Category B (PCB)</option>

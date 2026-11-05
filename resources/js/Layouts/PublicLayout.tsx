@@ -368,19 +368,19 @@ export const PublicLayout: React.FC<Props> = ({ children }) => {
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href={route('programs.show', 'PHARMB')} className="hover:text-[#FFB606] transition-colors flex items-center justify-between group">
+                                        <Link href={route('programs.show', 'PCB')} className="hover:text-[#FFB606] transition-colors flex items-center justify-between group">
                                             <span className="group-hover:translate-x-0.5 transition-transform">Pharmacy Category B</span>
                                             <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">2 Years</span>
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href={route('programs.show', 'DIP-HEALTH')} className="hover:text-[#FFB606] transition-colors flex items-center justify-between group">
+                                        <Link href={route('programs.show', 'HT')} className="hover:text-[#FFB606] transition-colors flex items-center justify-between group">
                                             <span className="group-hover:translate-x-0.5 transition-transform">Health Technology</span>
                                             <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">2 Years</span>
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href={route('programs.show', 'DIP-PATH')} className="hover:text-[#FFB606] transition-colors flex items-center justify-between group">
+                                        <Link href={route('programs.show', 'PATH')} className="hover:text-[#FFB606] transition-colors flex items-center justify-between group">
                                             <span className="group-hover:translate-x-0.5 transition-transform">Pathology Technology</span>
                                             <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">2 Years</span>
                                         </Link>

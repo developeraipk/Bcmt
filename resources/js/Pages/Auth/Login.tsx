@@ -23,13 +23,20 @@ export default function Login() {
       <Head title="Institutional Portal Login - BCMT" />
 
       {/* Top Bar */}
-      <div className="max-w-7xl mx-auto w-full flex justify-between items-center relative z-10">
-        <Link href="/" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-semibold transition">
-          <ArrowLeft className="w-4 h-4" /> Back to Public Portal
+      <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-2 sm:gap-4 relative z-10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[#07294D] text-xs sm:text-sm font-semibold transition shrink-0 whitespace-nowrap"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
+          <span><span className="hidden sm:inline">Back to </span>Public Portal</span>
         </Link>
-        <span className="text-xs bg-white text-slate-700 font-semibold px-3 py-1 rounded-full border border-slate-200 shadow-2xs">
-          Admissions & Exam System 2026–2027
-        </span>
+        <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs bg-white text-slate-700 font-semibold px-2.5 sm:px-3.5 py-1 rounded-full border border-slate-200 shadow-2xs shrink-0 whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+          <span className="hidden sm:inline">Admissions &amp; Exam System </span>
+          <span className="sm:hidden">Session </span>
+          <span>2026–2027</span>
+        </div>
       </div>
 
       {/* Main Container */}

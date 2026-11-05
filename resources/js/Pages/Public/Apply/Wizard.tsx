@@ -1189,15 +1189,15 @@ export default function Wizard({ activeSession, sessionPrograms }: Props) {
                         )}
 
                         {/* Stepper Navigation Actions */}
-                        <div className="mt-8 pt-6 border-t border-slate-200 flex items-center justify-between">
+                        <div className="mt-8 pt-6 border-t border-slate-200 flex items-center justify-between gap-3 sm:gap-4">
                             {currentStep > 1 ? (
                                 <button
                                     type="button"
                                     onClick={handlePrev}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
+                                    className="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs sm:text-sm font-semibold hover:bg-slate-50 transition-colors shrink-0 whitespace-nowrap shadow-2xs"
                                 >
-                                    <ArrowLeft className="h-4 w-4" />
-                                    <span>Previous Step</span>
+                                    <ArrowLeft className="h-4 w-4 shrink-0 text-slate-500" />
+                                    <span>Previous<span className="hidden sm:inline"> Step</span></span>
                                 </button>
                             ) : (
                                 <div></div>
@@ -1207,19 +1207,19 @@ export default function Wizard({ activeSession, sessionPrograms }: Props) {
                                 <button
                                     type="button"
                                     onClick={handleNext}
-                                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FFB606] hover:bg-[#EAA700] text-[#07294D] text-xs sm:text-sm font-black transition-all shadow-md hover:shadow-lg border border-[#D49600]/40"
+                                    className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl bg-[#FFB606] hover:bg-[#EAA700] text-[#07294D] text-xs sm:text-sm font-black transition-all shadow-md hover:shadow-lg border border-[#D49600]/40 whitespace-nowrap shrink-0"
                                 >
-                                    <span>Continue to Step {currentStep + 1}</span>
-                                    <ArrowRight className="h-4 w-4 text-[#07294D]" />
+                                    <span><span className="hidden sm:inline">Continue to </span>Step {currentStep + 1}</span>
+                                    <ArrowRight className="h-4 w-4 text-[#07294D] shrink-0" />
                                 </button>
                             ) : (
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold transition-all shadow-md hover:shadow-lg"
+                                    className="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs sm:text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap shrink-0"
                                 >
-                                    <span>{processing ? 'Submitting Application...' : 'Final Submit Application'}</span>
-                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span>{processing ? 'Submitting...' : 'Final Submit Application'}</span>
+                                    <CheckCircle2 className="h-4 w-4 shrink-0" />
                                 </button>
                             )}
                         </div>
