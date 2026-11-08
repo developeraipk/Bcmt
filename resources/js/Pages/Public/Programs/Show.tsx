@@ -51,12 +51,29 @@ export default function Show({ program, sessionProgram }: Props) {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left: Overview & Curriculum Details */}
                     <div className="lg:col-span-2 space-y-8">
+                        {(program.code === 'DIT' || program.category === 'technical_diploma') && (
+                            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-600 text-white uppercase tracking-wider">
+                                        100% Free Tuition Program
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-700">KP-BTE Peshawar Registered</span>
+                                </div>
+                                <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                                    Zero Tuition & Free Academic Charges
+                                </h4>
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                    Bannu College of Medical Technologies offers this 1-Year Diploma in Information Technology completely tuition-free. Students do not pay any college tuition or periodic recharge fees. Candidates only pay mandatory Board Registration and DMC verification charges directly to Khyber Pakhtunkhwa Board of Technical Education (KP-BTE).
+                                </p>
+                            </div>
+                        )}
+
                         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <h2 className="text-xl font-bold text-slate-900">Program Specifications</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                                     <span className="text-slate-500 font-medium block">Total Duration:</span>
-                                    <strong className="text-base text-slate-900">{program.duration_years} Academic Years</strong>
+                                    <strong className="text-base text-slate-900">{program.duration_years} Academic {program.duration_years === 1 ? 'Year' : 'Years'}</strong>
                                 </div>
                                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                                     <span className="text-slate-500 font-medium block">Session Quota:</span>

@@ -105,6 +105,18 @@ class ProgramSeeder extends Seeder
                 'description' => 'Two-year diploma program in Radiology & Medical Imaging Technology affiliated with KPK Medical Faculty.',
                 'is_active' => true,
             ],
+
+            // D. Technical & Vocational Diplomas (1 Year, Matric Pass, KP-BTE Peshawar)
+            [
+                'name' => 'Diploma in Information Technology (DIT)',
+                'code' => 'DIT',
+                'category' => 'technical_diploma',
+                'duration_years' => 1,
+                'qualification_required' => 'Matric Pass',
+                'affiliation' => 'Khyber Pakhtunkhwa Board of Technical Education (KP-BTE Peshawar)',
+                'description' => '1-Year comprehensive Diploma in Information Technology recognized by KP-BTE Peshawar. 100% Free Tuition Program (Students only pay standard Board Registration and DMC verification fees).',
+                'is_active' => true,
+            ],
         ];
 
         foreach ($programs as $prog) {

@@ -7,7 +7,7 @@ interface Program {
     id: number;
     name: string;
     code: string;
-    category: 'bs_degree' | 'pharmacy_b' | 'medical_diploma';
+    category: 'bs_degree' | 'pharmacy_b' | 'medical_diploma' | 'technical_diploma' | string;
     duration_years: number;
     qualification_required: string;
     affiliation: string;
@@ -19,6 +19,7 @@ export default function Index({ programs }: { programs: Program[] }) {
     const bsPrograms = programs.filter((p) => p.category === 'bs_degree');
     const pharmacyB = programs.filter((p) => p.category === 'pharmacy_b');
     const diplomas = programs.filter((p) => p.category === 'medical_diploma');
+    const technicalDiplomas = programs.filter((p) => p.category === 'technical_diploma' || p.code === 'DIT');
 
     return (
         <PublicLayout>
@@ -40,7 +41,7 @@ export default function Index({ programs }: { programs: Program[] }) {
                         Certified Degree & Diploma Programs
                     </h1>
                     <p className="text-sm sm:text-base text-slate-200 mt-2.5 max-w-2xl leading-relaxed font-normal">
-                        Explore our 9 recognized paramedical and allied health technology programs affiliated with KMU, Pharmacy Council, and KPK Medical Faculty.
+                        Explore our 10 recognized degree and diploma programs affiliated with KMU, Pharmacy Council, KPK Medical Faculty, and KP-BTE Peshawar.
                     </p>
                 </div>
             </div>
@@ -93,6 +94,30 @@ export default function Index({ programs }: { programs: Program[] }) {
                         ))}
                     </div>
                 </div>
+
+                {/* Technical & IT Diplomas (DIT) */}
+                {technicalDiplomas.length > 0 && (
+                    <div>
+                        <div className="border-b border-slate-200 pb-4 mb-8 flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900">1-Year Diploma in Information Technology (DIT)</h2>
+                                <p className="text-xs text-blue-800 font-semibold mt-1">
+                                    Affiliated with Khyber Pakhtunkhwa Board of Technical Education (KP-BTE Peshawar) • Minimum Qualification: Matric (SSC Pass)
+                                </p>
+                            </div>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                                <span>100% Free Tuition Fee</span>
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {technicalDiplomas.map((prog) => (
+                                <ProgramDetailCard key={prog.id} prog={prog} />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </PublicLayout>
     );
@@ -113,6 +138,8 @@ function ProgramDetailCard({ prog }: { prog: Program }) {
                                 ? '4-Year BS Degree'
                                 : prog.category === 'pharmacy_b'
                                 ? '2-Year Pharmacy Category B'
+                                : prog.category === 'technical_diploma' || prog.code === 'DIT'
+                                ? '1-Year Technical Diploma'
                                 : '2-Year Medical Diploma'}
                         </span>
                     </div>
@@ -126,10 +153,22 @@ function ProgramDetailCard({ prog }: { prog: Program }) {
                         )}
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200 shadow-2xs">
                             <Clock className="h-3 w-3 text-[#07294D]" />
-                            <span>{prog.duration_years} Years</span>
+                            <span>{prog.duration_years} {prog.duration_years === 1 ? 'Year' : 'Years'}</span>
                         </span>
                     </div>
                 </div>
+
+                {(prog.code === 'DIT' || prog.category === 'technical_diploma') && (
+                    <div className="mb-4 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-2xs">
+                        <span className="flex items-center gap-1.5">
+                            <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>100% Free Tuition Program</span>
+                        </span>
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+                            Only Board & DMC Fee
+                        </span>
+                    </div>
+                )}
 
                 {/* Title */}
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-[#07294D] transition-colors leading-snug mb-2.5">

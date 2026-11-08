@@ -342,6 +342,7 @@ export const PublicLayout: React.FC<Props> = ({ children }) => {
                                 <span className="px-2 py-0.5 rounded bg-white/10 border border-white/10">KMU Affiliated</span>
                                 <span className="px-2 py-0.5 rounded bg-white/10 border border-white/10">Pharmacy Council</span>
                                 <span className="px-2 py-0.5 rounded bg-white/10 border border-white/10">KPK Medical Faculty</span>
+                                <span className="px-2 py-0.5 rounded bg-white/10 border border-white/10">KP-BTE Peshawar</span>
                                 <span className="px-2 py-0.5 rounded bg-white/10 border border-white/10">HERA Chartered</span>
                             </div>
                         </div>
@@ -385,9 +386,15 @@ export const PublicLayout: React.FC<Props> = ({ children }) => {
                                             <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">2 Years</span>
                                         </Link>
                                     </li>
+                                    <li>
+                                        <Link href={route('programs.show', 'DIT')} className="hover:text-[#FFB606] transition-colors flex items-center justify-between group">
+                                            <span className="group-hover:translate-x-0.5 transition-transform text-amber-300 font-semibold">Diploma in IT (DIT)</span>
+                                            <span className="text-[10px] font-bold text-emerald-400">100% Free</span>
+                                        </Link>
+                                    </li>
                                     <li className="pt-1">
                                         <Link href={route('programs.index')} className="text-[#FFB606] font-bold inline-flex items-center gap-1 hover:underline text-xs">
-                                            <span>View All 9 Programs</span>
+                                            <span>View All 10 Programs</span>
                                             <ArrowRight className="h-3 w-3" />
                                         </Link>
                                     </li>

@@ -33,6 +33,7 @@ export default function SessionsCreate({ programs = [] }: Props) {
     else if (c === 'ANES' || c === 'DIPANES') initialSeats[p.id] = 5;
     else if (c === 'PHARMA' || c === 'DIPPHARM') initialSeats[p.id] = 5;
     else if (c === 'RADIO' || c === 'DIPRAD') initialSeats[p.id] = 5;
+    else if (c === 'DIT' || c === 'BTEDIT') initialSeats[p.id] = 50;
     else initialSeats[p.id] = 10;
   });
 

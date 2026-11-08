@@ -120,6 +120,10 @@ class AdmissionController extends Controller
             'DIP-RADIO' => 'RADIO',
             'RADIOLOGY' => 'RADIO',
             'DIP-PHARM' => 'PHARMA',
+            'DIT' => 'DIT',
+            'BTE-DIT' => 'DIT',
+            'DIP-IT' => 'DIT',
+            'INFORMATION-TECHNOLOGY' => 'DIT',
         ];
         $actualCode = $aliasMap[$normalizedCode] ?? $normalizedCode;
 

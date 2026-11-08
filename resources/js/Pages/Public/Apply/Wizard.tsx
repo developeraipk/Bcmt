@@ -23,7 +23,7 @@ interface SessionProgram {
     program_id: number;
     name: string;
     code: string;
-    category: 'bs_degree' | 'pharmacy_b' | 'medical_diploma';
+    category: 'bs_degree' | 'pharmacy_b' | 'medical_diploma' | 'technical_diploma' | string;
     duration_years: number;
     qualification_required: string;
     affiliation: string;
@@ -502,19 +502,31 @@ export default function Wizard({ activeSession, sessionPrograms }: Props) {
                                                         className="mt-1 text-[#07294D] focus:ring-[#07294D]"
                                                     />
                                                     <div>
-                                                        <h4 className="text-sm font-bold text-slate-900 leading-snug">
-                                                            {sp.name}
-                                                        </h4>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                                                                {sp.name}
+                                                            </h4>
+                                                            {(sp.code === 'DIT' || sp.category === 'technical_diploma') && (
+                                                                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">
+                                                                    100% Free Tuition
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-xs text-slate-500 mt-0.5">
-                                                            Duration: {sp.duration_years} Years • Min: {sp.qualification_required} • {sp.affiliation}
+                                                            Duration: {sp.duration_years} {sp.duration_years === 1 ? 'Year' : 'Years'} • Min: {sp.qualification_required} • {sp.affiliation}
                                                         </p>
                                                     </div>
                                                 </div>
 
                                                 <div className="text-right shrink-0">
-                                                    <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-md shadow-2xs">
+                                                    <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-md shadow-2xs block">
                                                         {sp.total_seats} Seats
                                                     </span>
+                                                    {(sp.code === 'DIT' || sp.category === 'technical_diploma') && (
+                                                        <span className="text-[10px] font-bold text-emerald-700 block mt-1">
+                                                            Only Board/DMC Fee
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         );

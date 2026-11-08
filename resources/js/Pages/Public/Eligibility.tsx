@@ -68,7 +68,7 @@ export default function Eligibility() {
                             <GraduationCap className="h-6 w-6" />
                         </span>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900">2. 2-Year Diploma Programs</h2>
+                            <h2 className="text-xl font-bold text-slate-900">2. 2-Year Medical Diploma Programs</h2>
                             <p className="text-xs text-[#07294D] font-bold">Pharmacy Category B & KPK Medical Faculty Diplomas</p>
                         </div>
                     </div>
@@ -85,6 +85,43 @@ export default function Eligibility() {
                         <p className="flex items-start gap-2.5">
                             <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                             <span><strong>Medical Technology Diplomas:</strong> Health, Pathology, Surgical, Anaesthesia, Pharmacy Technician, and Radiology affiliated with KPK Medical Faculty. Minimum Matric Pass required.</span>
+                        </p>
+                    </div>
+                </div>
+
+                {/* 3. 1-Year Diploma in Information Technology (DIT) */}
+                <div className="p-6 sm:p-8 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200">
+                                <GraduationCap className="h-6 w-6" />
+                            </span>
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900">3. 1-Year Diploma in Information Technology (DIT)</h2>
+                                <p className="text-xs text-blue-800 font-bold">KP Board of Technical Education (KP-BTE Peshawar)</p>
+                            </div>
+                        </div>
+                        <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            100% Free Tuition Fee
+                        </span>
+                    </div>
+
+                    <div className="space-y-3 text-xs text-slate-700 leading-relaxed pt-2 border-t border-slate-100">
+                        <p className="flex items-start gap-2.5">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <span><strong>Minimum Educational Requirement:</strong> Matriculation / 10th (SSC Pass - Science or Arts) from any recognized Board.</span>
+                        </p>
+                        <p className="flex items-start gap-2.5">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <span><strong>Board Affiliation & Registration:</strong> Fully affiliated and certified by the Khyber Pakhtunkhwa Board of Technical Education (KP-BTE Peshawar).</span>
+                        </p>
+                        <p className="flex items-start gap-2.5">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <span><strong>Fee Policy (Totally Free Tuition):</strong> 100% Free Tuition Program. The college charges zero tuition fees and zero recharge fees. Students only pay the standard, mandatory Board Registration Fee and DMC Verification Fee directly as per official BTE regulations.</span>
+                        </p>
+                        <p className="flex items-start gap-2.5">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <span><strong>Program Duration:</strong> 1 Academic Year structured into 2 intensive, practical semesters.</span>
                         </p>
                     </div>
                 </div>

@@ -121,6 +121,8 @@ export default function PublicMeritLists({
               <option value="SURG">Surgical (SURG)</option>
               <option value="ANES">Anesthesia (ANES)</option>
               <option value="RADIO">Radiology (RADIO)</option>
+              <option value="PHARMA">Pharmacy Diploma (PHARMA)</option>
+              <option value="DIT">Diploma in Information Technology (DIT)</option>
             </select>
           </div>
         </div>

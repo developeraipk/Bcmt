@@ -28,13 +28,14 @@ import {
     Scissors,
     Syringe,
     Stethoscope,
+    Laptop,
 } from 'lucide-react';
 
 interface ProgramItem {
     id: number;
     name: string;
     code: string;
-    category: 'bs_degree' | 'pharmacy_b' | 'medical_diploma';
+    category: 'bs_degree' | 'pharmacy_b' | 'medical_diploma' | 'technical_diploma' | string;
     duration_years: number;
     qualification_required: string;
     affiliation: string;
@@ -58,6 +59,7 @@ export default function Home({ activeSession, programs, settings }: Props) {
     const bsPrograms = programs.filter((p) => p.category === 'bs_degree');
     const pharmacyB = programs.filter((p) => p.category === 'pharmacy_b');
     const diplomas = programs.filter((p) => p.category === 'medical_diploma');
+    const technicalDiplomas = programs.filter((p) => p.category === 'technical_diploma' || p.code === 'DIT');
 
     const totalCohortSeats = programs.reduce((acc, p) => acc + (Number(p.seats) || 0), 0) || 200;
 
@@ -111,7 +113,7 @@ export default function Home({ activeSession, programs, settings }: Props) {
 
                             {/* Value Proposition Description */}
                             <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-2xl font-normal">
-                                Premier healthcare higher education institution offering 4-Year BS Degree Programs affiliated with <strong className="text-white font-semibold">Khyber Medical University (KMU)</strong>, Pharmacy Category B accredited by <strong className="text-white font-semibold">Pharmacy Council of Pakistan</strong>, and 2-Year Medical Technology Diplomas affiliated with <strong className="text-white font-semibold">KPK Medical Faculty</strong>.
+                                Premier healthcare and technical higher education institution offering 4-Year BS Degree Programs affiliated with <strong className="text-white font-semibold">Khyber Medical University (KMU)</strong>, Pharmacy Category B accredited by <strong className="text-white font-semibold">Pharmacy Council of Pakistan</strong>, 2-Year Medical Technology Diplomas affiliated with <strong className="text-white font-semibold">KPK Medical Faculty</strong>, and 1-Year Diploma in Information Technology (DIT) affiliated with <strong className="text-white font-semibold">KP-BTE Peshawar (100% Free Tuition)</strong>.
                             </p>
 
                             {/* Call to Actions */}
@@ -425,6 +427,44 @@ export default function Home({ activeSession, programs, settings }: Props) {
                             ))}
                         </div>
                     </div>
+
+                    {/* Category D: 1-Year Diploma in Information Technology (DIT) */}
+                    {technicalDiplomas.length > 0 && (
+                        <div className="mt-14">
+                            <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 via-sky-50/40 to-white border border-blue-200/80 shadow-2xs mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-xl bg-[#07294D] text-[#FFB606] flex items-center justify-center font-black text-sm shadow-xs shrink-0">
+                                        D
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg sm:text-xl font-bold text-[#07294D]">1-Year Diploma in Information Technology (DIT)</h3>
+                                            <span className="hidden sm:inline-flex text-[11px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                                                100% Free Tuition Fee
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            Affiliated with Khyber Pakhtunkhwa Board of Technical Education (KP-BTE Peshawar) • 2 Semesters
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                                        <Award className="h-3.5 w-3.5 text-blue-600" />
+                                        <span>KP-BTE Peshawar</span>
+                                        <span className="text-slate-300">•</span>
+                                        <span className="text-[#07294D] font-bold">Min. Matric (SSC) Pass</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {technicalDiplomas.map((prog) => (
+                                    <ProgramCard key={prog.id} program={prog} isAdmissionOpen={isAdmissionOpen} accentColor="gold" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -608,6 +648,14 @@ function getProgramMeta(code: string, category: string) {
             gradient: 'from-rose-500 to-red-600',
         };
     }
+    if (upper === 'DIT' || upper.includes('DIT') || upper.includes('INFORMATION')) {
+        return {
+            icon: Laptop,
+            iconClass: 'text-blue-700 bg-blue-50 border-blue-200',
+            badge: 'Information Technology',
+            gradient: 'from-blue-600 to-indigo-700',
+        };
+    }
     return {
         icon: Stethoscope,
         iconClass: 'text-[#07294D] bg-[#07294D]/10 border-[#07294D]/20',
@@ -652,6 +700,8 @@ function ProgramCard({
                                     ? '4-Year Professional BS Degree'
                                     : program.category === 'pharmacy_b'
                                     ? '2-Year Pharmacy Category B'
+                                    : program.category === 'technical_diploma' || program.code === 'DIT'
+                                    ? '1-Year Technical Diploma (KP-BTE)'
                                     : '2-Year Medical Technology Diploma'}
                             </p>
                         </div>
@@ -667,6 +717,19 @@ function ProgramCard({
                         </span>
                     </div>
                 </div>
+
+                {/* DIT Special 100% Free Tuition Badge */}
+                {(program.code === 'DIT' || program.category === 'technical_diploma') && (
+                    <div className="mb-4 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-2xs">
+                        <span className="flex items-center gap-1.5">
+                            <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>100% Free Tuition</span>
+                        </span>
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+                            Only Board & DMC Fee
+                        </span>
+                    </div>
+                )}
 
                 {/* Title */}
                 <h4 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-[#07294D] transition-colors leading-snug mb-2.5">
@@ -693,7 +756,7 @@ function ProgramCard({
                                     Duration
                                 </span>
                                 <span className="block text-xs font-bold text-slate-900 truncate">
-                                    {program.duration_years} Years
+                                    {program.duration_years} {program.duration_years === 1 ? 'Year' : 'Years'}
                                 </span>
                             </div>
                         </div>

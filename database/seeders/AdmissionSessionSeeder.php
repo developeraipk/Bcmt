@@ -36,6 +36,7 @@ class AdmissionSessionSeeder extends Seeder
             'ANES' => 5,
             'PHARMA' => 5,
             'RADIO' => 5,
+            'DIT' => 50,
         ];
 
         foreach ($seatQuotas as $code => $seats) {
