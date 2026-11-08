@@ -1,0 +1,40 @@
+name: Hostinger Auto-Deployment & Database Sync
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  auto-deploy:
+    name: Deploy to Hostinger & Sync Database
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Hostinger Git Webhook
+        env:
+          HOSTINGER_WEBHOOK_URL: ${{ secrets.HOSTINGER_WEBHOOK_URL }}
+        run: |
+          if [ -n "$HOSTINGER_WEBHOOK_URL" ]; then
+            echo "Triggering Hostinger Git pull webhook..."
+            curl -s -X POST "$HOSTINGER_WEBHOOK_URL"
+            echo "Hostinger Git pull requested successfully."
+          else
+            echo "Notice: HOSTINGER_WEBHOOK_URL secret not set. Skipping webhook trigger."
+          fi
+
+      - name: Trigger Automated Database Migrations
+        env:
+          PROD_APP_URL: ${{ secrets.PROD_APP_URL }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_SECRET_KEY || 'bcmt_deploy_2026_x89a' }}
+        run: |
+          if [ -n "$PROD_APP_URL" ]; then
+            echo "Waiting 6 seconds for Hostinger to pull updated files..."
+            sleep 6
+            echo "Triggering secure auto-migration on production..."
+            RESPONSE=$(curl -s -X POST "${PROD_APP_URL}/system/auto-sync-db" \
+              -H "Content-Type: application/json" \
+              -d "{\"token\": \"$DEPLOY_TOKEN\"}")
+            echo "Production sync response: $RESPONSE"
+          else
+            echo "Notice: PROD_APP_URL secret not set. The self-healing AppServiceProvider will automatically run pending migrations on the first page visit."
+          fi

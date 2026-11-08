@@ -7,6 +7,8 @@ use App\Models\AuditLog;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -106,5 +108,23 @@ class SettingsController extends Controller
         AuditLog::log('user_password_changed_by_admin', 'User', $targetUser->id);
 
         return back()->with('success', "Password for user '{$targetUser->name}' ({$targetUser->email}) has been updated successfully.");
+    }
+
+    public function runMigration(Request $request)
+    {
+        abort_unless($request->user()->hasRole('super_admin'), 403);
+
+        Artisan::call('migrate', ['--force' => true]);
+        $migrateOutput = trim(Artisan::output());
+
+        Artisan::call('optimize:clear');
+
+        Cache::forever('auto_schema_sync_dit_v1', true);
+
+        AuditLog::log('database_migrated', 'Migration', null, [
+            'output' => $migrateOutput,
+        ]);
+
+        return back()->with('success', 'Database synchronized successfully! ' . ($migrateOutput ?: 'All tables and programs are already up to date.'));
     }
 }

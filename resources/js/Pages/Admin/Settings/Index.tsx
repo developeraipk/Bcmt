@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import {
   Settings,
   Building,
@@ -53,6 +53,18 @@ interface Props {
 
 export default function SettingsIndex({ settings, staffUsers = [] }: Props) {
   const [activeTab, setActiveTab] = useState<'institutional' | 'admin_password' | 'staff_passwords'>('institutional');
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  const handleRunMigration = () => {
+    if (!confirm('Are you sure you want to run safe database migrations and clear optimization cache?')) {
+      return;
+    }
+    setIsMigrating(true);
+    router.post('/admin/settings/migrate-db', {}, {
+      preserveScroll: true,
+      onFinish: () => setIsMigrating(false),
+    });
+  };
 
   // 1. Institutional Settings Form
   const { data, setData, post, processing, errors } = useForm({
@@ -359,6 +371,37 @@ export default function SettingsIndex({ settings, staffUsers = [] }: Props) {
                   onChange={(e) => setData('exam_instructions', e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 font-semibold focus:ring-2 focus:ring-[#07294D] focus:outline-none text-xs sm:text-sm leading-relaxed"
                 />
+              </div>
+            </div>
+
+            {/* Database & Production Auto-Sync Card */}
+            <div className="p-5 sm:p-6 bg-gradient-to-r from-blue-50/80 via-sky-50/50 to-white rounded-2xl border border-blue-200/90 shadow-2xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 rounded-xl bg-[#07294D] text-[#FFB606] shrink-0 mt-0.5">
+                    <RefreshCw className={`w-5 h-5 ${isMigrating ? 'animate-spin' : ''}`} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-slate-900">Synchronize Database & Run Migrations</h4>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">
+                        Zero Data Loss
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Automatically runs safe pending migrations (including DIT program and quotas) and clears application cache. Does not delete any existing student records.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRunMigration}
+                  disabled={isMigrating}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isMigrating ? 'animate-spin' : ''}`} />
+                  <span>{isMigrating ? 'Synchronizing...' : 'Sync Database Now'}</span>
+                </button>
               </div>
             </div>
 

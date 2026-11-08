@@ -43,6 +43,9 @@ Route::redirect('/meritlist', '/merit-lists');
 Route::redirect('/merits', '/merit-lists');
 Route::redirect('/merit', '/merit-lists');
 
+// Automated Deployment & Self-Healing Database Sync Webhook
+Route::match(['get', 'post'], '/system/auto-sync-db', [\App\Http\Controllers\Public\AutoSyncController::class, 'sync'])->name('system.auto-sync');
+
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
@@ -149,6 +152,7 @@ Route::middleware(['auth', 'role:super_admin,management,admission_officer,docume
     Route::middleware(['role:super_admin,management'])->group(function () {
         Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
         Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+        Route::post('/settings/migrate-db', [AdminSettingsController::class, 'runMigration'])->name('settings.migrate-db');
         Route::post('/password/update-own', [AdminSettingsController::class, 'updateOwnPassword'])->name('password.update-own');
         Route::post('/users/{id}/password', [AdminSettingsController::class, 'updateUserPassword'])->name('users.password.update');
         Route::get('/audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs.index');
